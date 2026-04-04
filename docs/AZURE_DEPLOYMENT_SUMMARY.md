@@ -54,6 +54,10 @@
 ### Connection Information
 
 ```
+Production SQL Connection String:
+Connection string stored securely in Azure Key Vault / User Secrets.
+Not committed to source control.
+
 Web App URL:
 https://sportscard-api.azurewebsites.net
 
@@ -81,9 +85,18 @@ Never commit connection strings or passwords to source control.
    - Replace `EnsureCreatedAsync()` with `MigrateAsync()` before connecting to Azure SQL
 
 3. **Run EF Migrations**
+
    ```bash
+   <<<<<<< HEAD
+   # Configure connection string in User Secrets first:
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<your-secure-connection-string>"
+
+   # Then run migration:
+   dotnet ef database update
+   =======
    dotnet ef migrations add InitialCreate --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API
    dotnet ef database update --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API
+   >>>>>>> aeba27968d28f644f81ec6c3508a00164a4da46d
    ```
 
 4. **Deploy Application to Azure**

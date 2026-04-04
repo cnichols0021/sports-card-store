@@ -43,10 +43,21 @@ bld/
 [Ll]ogs/
 
 # ===============================================
+# Security & Credentials (NEVER COMMIT)
+# ===============================================
+local.settings.json
+appsettings.local.json
+*.local.json
+.env
+.env.local
+secrets.json
+connection-strings.json
+azure-credentials.json
+
+# ===============================================
 # Visual Studio Code Files
 # ===============================================
 .vscode/*
-!.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json

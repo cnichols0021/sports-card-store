@@ -29,8 +29,8 @@ if (app.Environment.IsDevelopment())
         {
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             
-            // Ensure database is created
-            await context.Database.EnsureCreatedAsync();
+            // Apply pending migrations
+            await context.Database.MigrateAsync();
             
             // Seed data
             await SportsCardSeeder.SeedAsync(context);
