@@ -13,7 +13,7 @@
 - **Server Name**: `sportscard-server-new`
 - **Region**: Central US (fallback due to East US capacity)
 - **Admin User**: `sqladmin`
-- **Admin Password**: `SportsCard2026!@#`
+- **Admin Password**: Stored securely — see Azure App Service Configuration (not committed to source control)
 - **Status**: Successfully created and configured
 
 ### 3. Azure SQL Database Creation
@@ -45,20 +45,24 @@
 
 ### 7. Configuration Updates
 
-- **Updated**: `src/SportsCardStore.API/appsettings.json`
-- **Added**: Production Azure SQL connection string
-- **Maintained**: Development local database configuration in `appsettings.Development.json`
+- **appsettings.json**: Connection string placeholder only — no credentials in source control
+- **Local development**: Use `dotnet user-secrets` to store connection string locally
+- **Production**: Connection string stored in Azure App Service Configuration
 
 ## 🔧 **Resource Details**
 
 ### Connection Information
 
 ```
-Production SQL Connection String:
-Server=tcp://sportscard-server-new.database.windows.net,1433;Initial Catalog=SportscardDb;Persist Security Info=False;User ID=sqladmin;Password=SportsCard2026!@#;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
-
 Web App URL:
 https://sportscard-api.azurewebsites.net
+
+SQL Server:
+sportscard-server-new.database.windows.net
+Database: SportscardDb
+
+Credentials: Stored in Azure App Service Configuration only.
+Never commit connection strings or passwords to source control.
 ```
 
 ### Resource Locations
@@ -69,22 +73,26 @@ https://sportscard-api.azurewebsites.net
 
 ## 📋 **Next Steps Required**
 
-1. **Database Migration**
+1. **Store connection string securely**
+   - For local dev: `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<your-connection-string>"`
+   - For production: Azure Portal → Web App → Configuration → Connection Strings
 
+2. **Update Program.cs**
+   - Replace `EnsureCreatedAsync()` with `MigrateAsync()` before connecting to Azure SQL
+
+3. **Run EF Migrations**
    ```bash
-   dotnet ef database update --connection "Server=tcp://sportscard-server-new.database.windows.net,1433;Initial Catalog=SportscardDb;Persist Security Info=False;User ID=sqladmin;Password=SportsCard2026!@#;MultipleActiveResultSources=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+   dotnet ef migrations add InitialCreate --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API
+   dotnet ef database update --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API
    ```
 
-2. **Deploy Application to Azure**
+4. **Deploy Application to Azure**
    - Publish the API project to the Azure Web App
-   - Configure application settings in Azure portal if needed
+   - Verify connection string is set in App Service Configuration
 
-3. **Firewall Configuration** (Optional)
-   - Add specific IP addresses for development access
-   - Configure additional security rules as needed
-
-4. **SSL Certificate** (Optional)
-   - Custom domain and SSL certificate setup if required
+5. **Firewall Configuration**
+   - Add your local IP address for development database access
+   - Azure Portal → SQL Server → Networking → Add client IP
 
 ## 💰 **Estimated Monthly Costs**
 
@@ -92,16 +100,16 @@ https://sportscard-api.azurewebsites.net
 - **App Service Plan (B1)**: ~$13/month
 - **Total Estimated**: ~$18/month
 
-## 🚨 **Important Notes**
+## 🚫 **Security Rules — Never Violate These**
 
-- SQL Server admin credentials are stored in configuration
-- Consider using Azure Key Vault for production secrets
-- Regional placement in Central US due to East US capacity constraints
-- All resources are in the Basic tier for cost optimization
+- Never commit passwords, connection strings, or API keys to source control
+- Never store credentials in appsettings.json in a public repo
+- Use `dotnet user-secrets` for local development secrets
+- Use Azure App Service Configuration for production secrets
+- Use Azure Key Vault for enterprise-grade secrets management (future phase)
 
 ## 🏁 **Completion Status**
 
 **Status**: ✅ Complete  
 **Date**: April 4, 2026  
-**Duration**: Infrastructure setup completed  
-**Ready for**: Application deployment and database migration
+**Ready for**: EF migrations, Program.cs update, and application deployment
