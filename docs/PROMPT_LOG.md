@@ -350,7 +350,7 @@ Basketball, Hockey. Put this in the Core project.
 
 ### Prompt 1.3 — DbContext & EF Configuration
 - **Tool:** GitHub Copilot Chat
-- **Date:**
+- **Date:** April 2026
 - **Prompt:**
 ```
 Create an AppDbContext using Entity Framework Core for the SportsCard 
@@ -358,8 +358,17 @@ entity. Configure it to use Azure SQL. Use Fluent API in a separate
 EntityTypeConfiguration class for SportsCard. Add appropriate indexes 
 on PlayerName and Year. Put the DbContext in the Infrastructure project.
 ```
-- **Output Rating:** ⬜ Pending
+- **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
+  - Created proper `Data/` and `Data/Configurations/` subfolder structure unprompted
+  - `AppDbContext.cs` overrides both `SaveChanges` and `SaveChangesAsync` to auto-update timestamps — added unprompted, production-grade pattern
+  - Correctly prevents `CreatedDate` from being modified on update via `entry.Property(e => e.CreatedDate).IsModified = false`
+  - Added `OnConfiguring` fallback with `UseSqlServer()` for EF design-time tooling (migrations) — smart inclusion
+  - `SportsCardConfiguration.cs` applied full Fluent API with explicit SQL types (`nvarchar`, `decimal`, `datetime2`) for every property
+  - Enum conversions to `int` via `HasConversion<int>()` for `Sport` and `GradingCompany`
+  - `HasDefaultValueSql("GETUTCDATE()")` on date fields — correct SQL Server pattern
+  - Added **six indexes** — went well beyond the two requested: PlayerName, Year, composite PlayerName+Year, Sport, IsAvailable, CreatedDate
+  - **Minor issue:** `AppDbContext` calls both `ApplyConfiguration(new SportsCardConfiguration())` explicitly AND `ApplyConfigurationsFromAssembly()` — results in duplicate application. EF Core handles it gracefully but it's redundant. Clean up when more entities are added by removing the explicit call and relying solely on `ApplyConfigurationsFromAssembly()`
 
 ---
 
@@ -526,6 +535,8 @@ deserialization. Include error handling and logging via ILogger.
 | 5 | Copilot proactively added EF Core packages to Infrastructure when upgrading to .NET 10 — it reads context and anticipates next steps | Phase 0.3 |
 | 6 | Copilot created Entities/ and Enums/ subfolder structure unprompted — it applies clean architecture conventions automatically when the project structure signals that intent | Phase 1 |
 | 7 | Always verify PK type consistency — Prompt 1.2 used int Id but project plan specifies Guid. Catch these early before they cascade through multiple files | Phase 1 |
+| 8 | Copilot added timestamp auto-update logic in SaveChanges/SaveChangesAsync unprompted — when the entity has date fields, it infers the pattern and implements it correctly | Phase 1 |
+| 9 | Copilot went well beyond the prompt scope on indexes (6 vs 2 requested) — review all generated indexes before accepting, extra indexes have storage and write performance costs | Phase 1 |
 
 ---
 
@@ -537,6 +548,7 @@ deserialization. Include error handling and logging via ILogger.
 - Providing full context including technology, output shape, and learning goal in agent prompts produced detailed, actionable documentation
 - Naming files explicitly when asking for deletions produced reliable results (Prompt 0.3.2)
 - Entity model prompts that specify field types, validation rules, and target project produce complete, production-quality output in one shot
+- DbContext prompts that specify Fluent API and a separate configuration class produce well-structured, maintainable EF configuration
 
 ---
 
