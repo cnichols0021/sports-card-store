@@ -1,0 +1,448 @@
+# ===============================================
+# .NET Core / ASP.NET Core Build Outputs
+# ===============================================
+bin/
+obj/
+out/
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
+
+# ===============================================
+# Visual Studio Files
+# ===============================================
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# ===============================================
+# Visual Studio Code Files
+# ===============================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# ===============================================
+# User Secrets and Local Settings
+# ===============================================
+appsettings.local.json
+appsettings.*.local.json
+secrets.json
+*.pfx
+*.p12
+launchSettings.json
+Properties/launchSettings.json
+
+# ===============================================
+# Environment-Specific Configuration Files
+# ===============================================
+appsettings.Production.json
+appsettings.Staging.json
+appsettings.Development.json
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# ===============================================
+# NuGet Packages and Package Management
+# ===============================================
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!packages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/packages/*
+!**/packages/build/
+!**/packages/repositories.config
+
+# ===============================================
+# Azure Deployment and Cloud Artifacts
+# ===============================================
+PublishProfiles/
+*.pubxml
+*.pubxml.user
+*.publishsettings
+.azure/
+*.azurePubxml
+*.AzurePubxml
+ServiceConfiguration.Local.cscfg
+ServiceConfiguration.Cloud.cscfg
+*.Cloud.cscfg
+*.Local.cscfg
+ecf/
+rcf/
+
+# Azure Functions
+local.settings.json
+host.json.backup
+
+# Azure App Service
+.deployment
+deploy.cmd
+.deploy/
+
+# ===============================================
+# Entity Framework and Database Files
+# ===============================================
+*.mdf
+*.ldf
+*.ndf
+migrations/
+!Migrations/
+
+# ===============================================
+# Testing and Code Coverage
+# ===============================================
+TestResults/
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+coverage*.info
+coverage*.lcov
+*.opencover
+.coverage/
+coverage/
+lcov.info
+
+# ===============================================
+# Logging and Temporary Files
+# ===============================================
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===============================================
+# Node.js and Frontend (if using)
+# ===============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+wwwroot/lib/
+wwwroot/css/*.min.css
+wwwroot/js/*.min.js
+
+# ===============================================
+# JetBrains Rider
+# ===============================================
+.idea/
+*.sln.iml
+
+# ===============================================
+# MonoDevelop / Xamarin Studio
+# ===============================================
+*.pidb
+*.pdb
+*.userprefs
+
+# ===============================================
+# SQL Server Files
+# ===============================================
+*.mdf
+*.ldf
+*.sdf
+*.Cache
+ClientBin/
+[Ss]tyle[Cc]op.*
+
+# ===============================================
+# Windows Image File Caches
+# ===============================================
+Thumbs.db
+ehthumbs.db
+
+# ===============================================
+# Folder Config File
+# ===============================================
+Desktop.ini
+
+# ===============================================
+# Recycle Bin Used on File Shares
+# ===============================================
+$RECYCLE.BIN/
+
+# ===============================================
+# Mac Desktop Services Store
+# ===============================================
+.DS_Store
+
+# ===============================================
+# Windows Installer Files
+# ===============================================
+*.cab
+*.msi
+*.msm
+*.msp
+
+# ===============================================
+# Windows Shortcuts
+# ===============================================
+*.lnk
+
+# ===============================================
+# Backup and Temporary Files
+# ===============================================
+*.bak
+*.backup
+*.orig
+*~
+*.swp
+*.swo
+
+# ===============================================
+# Application-Specific Files
+# ===============================================
+# Sports Card Store specific files
+/src/SportsCardStore.API/Logs/
+/src/SportsCardStore.API/wwwroot/uploads/
+*.xlsx
+*.xls
+!sample-data/
+card-images/
+temp-uploads/
+
+# ===============================================
+# Docker Files (if using containerization)
+# ===============================================
+Dockerfile.override
+docker-compose.override.yml
+.dockerignore
+
+# ===============================================
+# SSL Certificates and Security Files
+# ===============================================
+*.key
+*.crt
+*.csr
+*.pem
+cert.p12
+cert.pfx
+
+# ===============================================
+# Package Manager Lock Files
+# ===============================================
+packages-lock.json
+paket-files/
+
+# ===============================================
+# FSharp Specific (if using F#)
+# ===============================================
+.fake/
+.paket/
+paket-files/
+
+# ===============================================
+# Ionide (F# VS Code plugin) working folder
+# ===============================================
+.ionide/
+
+# ===============================================
+# .NET Framework specific
+# ===============================================
+[Ee]xpress/
+
+# ===============================================
+# DocProject is a documentation generator add-in
+# ===============================================
+DocProject/buildhelp/
+DocProject/Help/*.HxT
+DocProject/Help/*.HxC
+DocProject/Help/*.hhc
+DocProject/Help/*.hhk
+DocProject/Help/*.hhp
+DocProject/Help/Html2
+DocProject/Help/html
+
+# ===============================================
+# Click-Once directory
+# ===============================================
+publish/
+
+# ===============================================
+# Publish Web Output
+# ===============================================
+*.[Pp]ublish.xml
+*.azurePubxml
+
+# ===============================================
+# NuGet v3's project.json files produces more ignorable files
+# ===============================================
+*.nuget.props
+*.nuget.targets
+
+# ===============================================
+# Microsoft Fakes
+# ===============================================
+FakesAssemblies/
+
+# ===============================================
+# GhostDoc plugin setting file
+# ===============================================
+*.GhostDoc.xml
+
+# ===============================================
+# Node.js Tools for Visual Studio
+# ===============================================
+.ntvs_analysis.dat
+node_modules/
+
+# ===============================================
+# TypeScript v1 declaration files
+# ===============================================
+typings/
+
+# ===============================================
+# Visual Studio 6 build log
+# ===============================================
+*.plg
+
+# ===============================================
+# Visual Studio 6 workspace options file
+# ===============================================
+*.opt
+
+# ===============================================
+# Visual Studio 6 auto-generated workspace file
+# ===============================================
+*.vbw
+
+# ===============================================
+# Visual Studio LightSwitch build output
+# ===============================================
+**/*.HTMLClient/GeneratedArtifacts
+**/*.DesktopClient/GeneratedArtifacts
+**/*.DesktopClient/ModelManifest.xml
+**/*.Server/GeneratedArtifacts
+**/*.Server/ModelManifest.xml
+_Pvt_Extensions
+
+# ===============================================
+# Paket dependency manager
+# ===============================================
+.paket/paket.exe
+paket-files/
+
+# ===============================================
+# FAKE - F# Make
+# ===============================================
+.fake/
+
+# ===============================================
+# CodeRush personal settings
+# ===============================================
+.cr/personal
+
+# ===============================================
+# Python Tools for Visual Studio (PTVS)
+# ===============================================
+__pycache__/
+*.pyc
+
+# ===============================================
+# Cake - Uncomment if you are using it
+# ===============================================
+# tools/**
+# !tools/packages.config
+
+# ===============================================
+# Tabs Studio
+# ===============================================
+*.tss
+
+# ===============================================
+# Telerik's JustMock configuration file
+# ===============================================
+*.jmconfig
+
+# ===============================================
+# BizTalk build output
+# ===============================================
+*.btp.cs
+*.btm.cs
+*.odx.cs
+*.xsd.cs
+
+# ===============================================
+# OpenCover UI analysis results
+# ===============================================
+OpenCover/
+
+# ===============================================
+# Azure Stream Analytics local run output
+# ===============================================
+ASALocalRun/
+
+# ===============================================
+# MSBuild Binary and Structured Log
+# ===============================================
+*.binlog
+
+# ===============================================
+# NVidia Nsight GPU debugger configuration file
+# ===============================================
+*.nvuser
+
+# ===============================================
+# MFractors (Xamarin productivity tool) working folder
+# ===============================================
+.mfractor/
+
+# ===============================================
+# Local History for Visual Studio
+# ===============================================
+.localhistory/
+
+# ===============================================
+# BeatPulse healthcheck temp database
+# ===============================================
+healthchecksdb
+
+# ===============================================
+# Backup folder for Package Reference Convert tool in Visual Studio 2017
+# ===============================================
+MigrationBackup/
