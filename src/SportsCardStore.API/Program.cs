@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using SportsCardStore.Core.Interfaces;
 using SportsCardStore.Infrastructure.Data;
 using SportsCardStore.Infrastructure.Data.Seeders;
+using SportsCardStore.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseSqlServer(connectionString);
 });
+
+// Add Blob Storage Service
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
