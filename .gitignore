@@ -76,6 +76,20 @@ appsettings.Development.json
 .env.development
 
 # ===============================================
+# Credential and Secret Files — NEVER COMMIT
+# ===============================================
+azure-credentials.json
+azure-credentials*.json
+*-credentials.json
+*-credentials*.json
+*credentials*.json
+*secrets*.json
+*-secrets.json
+*passwords*.json
+connection-strings.json
+connection-strings*.json
+
+# ===============================================
 # NuGet Packages and Package Management
 # ===============================================
 *.nupkg
