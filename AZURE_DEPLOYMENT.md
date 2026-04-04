@@ -9,17 +9,23 @@
 .\azure-setup-commands.ps1
 ```
 
-## Step 2: Update Connection Strings
+## Step 2: Configure Connection Strings Securely
 
-After running the script, you'll get a connection string. Add it to your `appsettings.json`:
+**🔒 SECURITY IMPORTANT**: Never add connection strings to appsettings.json in a public repository.
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=tcp:sportscard-sql-server.database.windows.net,1433;Initial Catalog=SportscardDb;User ID=sqladmin;Password=YourSecurePassword123!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-  }
-}
+### For Local Development (Use dotnet user-secrets):
+
+```powershell
+# Initialize user secrets for the API project
+dotnet user-secrets init --project src/SportsCardStore.API
+
+# Store the connection string securely (replace with your actual password)
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=tcp:sportscard-sql-server.database.windows.net,1433;Initial Catalog=SportscardDb;User ID=sqladmin;Password=YourSecurePassword123!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" --project src/SportsCardStore.API
 ```
+
+### For Production (Azure App Service Configuration):
+
+Connection strings will be configured in Azure App Service Configuration during deployment. The application automatically reads from Azure App Service Configuration in production environments.
 
 ## Step 3: Add Your IP to SQL Firewall
 
