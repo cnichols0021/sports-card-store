@@ -18,6 +18,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add Blob Storage Service
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
+// Add Sports Card Service
+builder.Services.AddScoped<ISportsCardService, SportsCardService>();
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -1,6 +1,67 @@
-@SportsCardStore.API_HostAddress = http://localhost:5281
+### Test SportsCards API Endpoints
 
-GET {{SportsCardStore.API_HostAddress}}/weatherforecast/
-Accept: application/json
+# Get all sports cards (with pagination)
+GET https://localhost:7089/api/sportscards?page=1&pageSize=10
+
+###
+
+# Get all sports cards with filters
+GET https://localhost:7089/api/sportscards?sport=0&brand=Topps&page=1&pageSize=5
+
+###
+
+# Get a specific sports card by ID
+GET https://localhost:7089/api/sportscards/1
+
+###
+
+# Create a new sports card
+POST https://localhost:7089/api/sportscards
+Content-Type: application/json
+
+{
+  "playerName": "Mike Trout",
+  "year": 2023,
+  "brand": "Topps",
+  "cardNumber": "1",
+  "sport": 0,
+  "team": "Los Angeles Angels",
+  "grade": 9.5,
+  "gradingCompany": 0,
+  "condition": "Mint",
+  "price": 299.99,
+  "quantity": 1,
+  "imageUrl": "https://example.com/mike-trout-2023.jpg",
+  "description": "2023 Topps Mike Trout card",
+  "isAvailable": true
+}
+
+###
+
+# Update an existing sports card
+PUT https://localhost:7089/api/sportscards/1
+Content-Type: application/json
+
+{
+  "playerName": "Mike Trout",
+  "year": 2023,
+  "brand": "Topps",
+  "cardNumber": "1",
+  "sport": 0,
+  "team": "Los Angeles Angels",
+  "grade": 10.0,
+  "gradingCompany": 0,
+  "condition": "Perfect",
+  "price": 399.99,
+  "quantity": 1,
+  "imageUrl": "https://example.com/mike-trout-2023-updated.jpg",
+  "description": "2023 Topps Mike Trout card - Updated condition",
+  "isAvailable": true
+}
+
+###
+
+# Delete a sports card
+DELETE https://localhost:7089/api/sportscards/1
 
 ###
