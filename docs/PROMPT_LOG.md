@@ -253,7 +253,6 @@ so no other changes are needed. Just delete both files.
 - **Notes / What Was Changed:**
   - Both files removed cleanly on second attempt
   - Controllers folder disappeared automatically since it was empty after deletion
-  - Lesson: Be more specific when asking Copilot to delete files — name them explicitly
 
 ---
 
@@ -295,9 +294,9 @@ correctly.
 - **Notes / What Was Changed:**
   - All src and test projects updated to net10.0 cleanly
   - Swashbuckle updated to 7.0.0
-  - Copilot proactively added EF Core SqlServer 10.0.0 and EF Core Tools 10.0.0 to Infrastructure project — kept these, they will be needed for Phase 1.3
-  - UnitTests project came back with xUnit, Moq, FluentAssertions, coverlet already wired up — solid test stack ready to go
-  - Decision: .NET 10 chosen because it is the current LTS (released November 2025) — correct choice for a new project started April 2026
+  - Copilot proactively added EF Core SqlServer 10.0.0 and EF Core Tools 10.0.0 to Infrastructure — kept these
+  - UnitTests project came back with xUnit, Moq, FluentAssertions, coverlet already wired up
+  - Decision: .NET 10 chosen because it is the current LTS (released November 2025)
 
 ---
 
@@ -337,14 +336,12 @@ Basketball, Hockey. Put this in the Core project.
 ```
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
-  - Copilot created proper subfolder structure unprompted: `Entities/` and `Enums/` — correct clean architecture approach
-  - Added XML doc comments to every property — production quality output
-  - Made `Grade` nullable (`decimal?`) — smart decision, raw/ungraded cards don't have a grade value
-  - Added `[Url]` validation on `ImageUrl` and range validation on `Year` (1800–2100)
-  - Created `GradingCompany.cs` enum with PSA, BGS, SGC, Raw values with inline comments
-  - Created `Category.cs` enum with Baseball, Football, Basketball, Hockey
-  - Used `[Column(TypeName = "decimal(3,1)")]` for Grade and `decimal(8,2)` for Price — correct SQL precision
-  - **Note for Phase 1.3:** Entity uses `int Id` — project plan specifies `Guid` PKs. Flag this when building the DbContext and decide which to standardize on
+  - Created `Entities/` and `Enums/` subfolder structure unprompted
+  - XML doc comments on every property
+  - `Grade` made nullable — raw cards don't have a grade
+  - `[Url]` validation on ImageUrl, range on Year (1800-2100)
+  - Correct decimal precision: `decimal(3,1)` for Grade, `decimal(8,2)` for Price
+  - **Note:** Entity uses `int Id` — project plan specifies `Guid`. Flag when building DbContext
 
 ---
 
@@ -360,15 +357,14 @@ on PlayerName and Year. Put the DbContext in the Infrastructure project.
 ```
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
-  - Created proper `Data/` and `Data/Configurations/` subfolder structure unprompted
-  - `AppDbContext.cs` overrides both `SaveChanges` and `SaveChangesAsync` to auto-update timestamps — added unprompted, production-grade pattern
-  - Correctly prevents `CreatedDate` from being modified on update via `entry.Property(e => e.CreatedDate).IsModified = false`
-  - Added `OnConfiguring` fallback with `UseSqlServer()` for EF design-time tooling (migrations) — smart inclusion
-  - `SportsCardConfiguration.cs` applied full Fluent API with explicit SQL types (`nvarchar`, `decimal`, `datetime2`) for every property
-  - Enum conversions to `int` via `HasConversion<int>()` for `Sport` and `GradingCompany`
-  - `HasDefaultValueSql("GETUTCDATE()")` on date fields — correct SQL Server pattern
-  - Added **six indexes** — went well beyond the two requested: PlayerName, Year, composite PlayerName+Year, Sport, IsAvailable, CreatedDate
-  - **Minor issue:** `AppDbContext` calls both `ApplyConfiguration(new SportsCardConfiguration())` explicitly AND `ApplyConfigurationsFromAssembly()` — results in duplicate application. EF Core handles it gracefully but it's redundant. Clean up when more entities are added
+  - Created `Data/` and `Data/Configurations/` subfolder structure unprompted
+  - Auto-updates timestamps in SaveChanges/SaveChangesAsync — production-grade pattern added unprompted
+  - Prevents CreatedDate from being modified on update
+  - OnConfiguring fallback for EF design-time tooling
+  - Full Fluent API with explicit SQL types for every property
+  - Enum conversions to int, HasDefaultValueSql("GETUTCDATE()") on date fields
+  - Six indexes added (vs two requested) — PlayerName, Year, composite, Sport, IsAvailable, CreatedDate
+  - **Minor issue:** Duplicate config application via ApplyConfiguration + ApplyConfigurationsFromAssembly
 
 ---
 
@@ -385,14 +381,12 @@ on app startup in development environment only.
 ```
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
-  - Created `Data/Seeders/` subfolder unprompted — consistent folder discipline throughout
-  - Idempotent guard: `if (await context.SportsCards.AnyAsync()) return` — won't double-seed on app restart
-  - 10 realistic cards: Trout, Acuna, Jeter (baseball), Brady, Herbert, Burrow (football), LeBron, Luka, Jordan, Zion (basketball)
-  - All three grading companies represented: PSA, BGS, SGC — plus Raw
-  - Raw cards correctly have `Grade = null` — consistent with the nullable decision from Prompt 1.2
-  - Prices range from $45 to $495 — within the $5-$500 spec
-  - Program.cs updated correctly: DbContext registered via DI, development-only seeding block, exception handling with logger
-  - EnsureCreatedAsync() flag resolved in Phase 2 via Prompt 2.4
+  - Created `Data/Seeders/` subfolder unprompted
+  - Idempotent guard prevents double-seeding
+  - 10 realistic cards across baseball, football, basketball — all three grading companies plus Raw
+  - Raw cards correctly have `Grade = null`
+  - Prices $45-$495, accurate card details
+  - Program.cs wired up correctly with DI, development-only block, exception handling
 
 ---
 
@@ -411,28 +405,20 @@ called 'sportscard-api'. Return the connection strings I need.
 ```
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
-  - Resource Group created in East US ✅
-  - SQL Server fell back to Central US due to East US capacity — not an issue for a portfolio project
-  - Azure SQL Database `SportscardDb` created at Basic tier (5 DTU, ~$5/month) ✅
-  - App Service Plan `sportscard-app-service-plan` at Basic B1 (~$13/month) ✅
-  - Web App `sportscard-api` created at https://sportscard-api.azurewebsites.net ✅
-  - TLS and firewall configured ✅
-  - **Security issue triggered:** Copilot wrote the full connection string including admin password directly into `appsettings.json` and `AZURE_DEPLOYMENT_SUMMARY.md` — both committed to the public repo. Required immediate remediation (see Phase 2 Security Fix below)
+  - Resource Group in East US, SQL Server in Central US (capacity fallback) ✅
+  - Azure SQL `SportscardDb` at Basic tier (~$5/month) ✅
+  - App Service Plan B1 (~$13/month), Web App at https://sportscard-api.azurewebsites.net ✅
+  - **Security issue:** Full connection string with password written directly into `appsettings.json` and `AZURE_DEPLOYMENT_SUMMARY.md` — both committed to public repo. Required immediate remediation (see below)
 
 ---
 
 ### Phase 2 Security Remediation — Credentials Exposed in Public Repo
 - **Date:** April 2026
-- **What Happened:**
-  - `appsettings.json` was committed to the public repo containing the full Azure SQL connection string including plain-text admin password
-  - `AZURE_DEPLOYMENT_SUMMARY.md` also contained the full connection string and password in plain text
-  - `azure-credentials.json` was created locally but not yet pushed — needed to ensure it stayed that way
+- **What Happened:** Full Azure SQL password committed to public repo in `appsettings.json` and `AZURE_DEPLOYMENT_SUMMARY.md`
 - **Actions Taken:**
-  - Azure SQL Server admin password rotated immediately in Azure Portal
-  - `appsettings.json` sanitized — connection string replaced with placeholder
-  - `AZURE_DEPLOYMENT_SUMMARY.md` sanitized — credentials replaced with secure storage guidance
-  - `.gitignore` updated with a new `Credential and Secret Files` section covering `azure-credentials.json` and broad credential naming patterns
-  - Both fixes committed directly by Claude via GitHub MCP
+  - Azure SQL password rotated immediately
+  - Both files sanitized and re-committed by Claude via GitHub MCP
+  - `.gitignore` updated with broad credential file pattern coverage including `azure-credentials.json`
 
 ---
 
@@ -444,74 +430,114 @@ called 'sportscard-api'. Return the connection strings I need.
 Set up .NET user secrets for the SportsCardStore.API project to 
 store the Azure SQL connection string securely for local development.
 
-1. Run the following command to initialize user secrets:
-   dotnet user-secrets init --project src/SportsCardStore.API
-
-2. Run the following command to store the connection string 
-   (I will fill in the actual value manually after):
-   dotnet user-secrets set "ConnectionStrings:DefaultConnection" 
+1. Run: dotnet user-secrets init --project src/SportsCardStore.API
+2. Run: dotnet user-secrets set "ConnectionStrings:DefaultConnection" 
    "PLACEHOLDER" --project src/SportsCardStore.API
-
-3. Update Program.cs to ensure the connection string falls back 
-   correctly — it should read from user secrets in Development 
-   and from Azure App Service Configuration in Production. 
-   No connection string should ever be hardcoded in appsettings.json.
-
-4. Show me exactly where to find the user secrets file on my 
-   local machine so I can manually update the placeholder with 
-   the real connection string.
+3. Update Program.cs to read from user secrets in Development and 
+   Azure App Service Configuration in Production.
+4. Show me where the user secrets file lives locally.
 ```
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
-  - User secrets initialized for SportsCardStore.API project
-  - Connection string stored in local user secrets file (never committed to repo)
-  - Program.cs reads from user secrets in Development, Azure App Service Configuration in Production
-  - User secrets file location on Windows: `%APPDATA%\Microsoft\UserSecrets\<guid>\secrets.json`
+  - User secrets initialized, connection string stored locally (never committed)
+  - Windows location: `%APPDATA%\Microsoft\UserSecrets\<guid>\secrets.json`
 
 ---
 
-### Prompt 2.4 — Swap EnsureCreatedAsync for MigrateAsync and Create First Migration
+### Prompt 2.4 — MigrateAsync and InitialCreate Migration
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
 ```
-In SportsCardStore.API Program.cs, replace EnsureCreatedAsync() 
-with MigrateAsync() so that EF Core migrations are applied 
-correctly instead of bypassing the migration system.
-
-Then create the first EF Core migration called "InitialCreate":
-
-dotnet ef migrations add InitialCreate \
-  --project src/SportsCardStore.Infrastructure \
+Replace EnsureCreatedAsync() with MigrateAsync() in Program.cs.
+Create migration: dotnet ef migrations add InitialCreate 
+  --project src/SportsCardStore.Infrastructure 
   --startup-project src/SportsCardStore.API
-
-Then apply the migration to the Azure SQL database:
-
-dotnet ef database update \
-  --project src/SportsCardStore.Infrastructure \
+Apply migration: dotnet ef database update 
+  --project src/SportsCardStore.Infrastructure 
   --startup-project src/SportsCardStore.API
-
-Show me the generated migration files and confirm what tables 
-and indexes will be created in the database.
 ```
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
-  - `Program.cs` updated — `EnsureCreatedAsync()` replaced with `MigrateAsync()` ✅
-  - Migration `20260404180525_InitialCreate` generated with correct timestamp ✅
-  - All three migration files created: `InitialCreate.cs`, `InitialCreate.Designer.cs`, `AppDbContextModelSnapshot.cs` ✅
-  - Migration creates `SportsCards` table with all correct column types, decimal precision, and datetime2 defaults ✅
-  - All 6 indexes included in migration — PlayerName, Year, PlayerName+Year, Sport, IsAvailable, CreatedDate ✅
-  - Clean `Down()` method drops the table on rollback ✅
+  - `EnsureCreatedAsync()` replaced with `MigrateAsync()` ✅
+  - Migration `20260404180525_InitialCreate` generated — all columns, types, and 6 indexes correct ✅
+  - All three migration files created correctly ✅
+  - Clean `Down()` method included ✅
   - Migration applied to Azure SQL — `SportscardDb` table is live ✅
 
 ---
 
-### Prompt 2.2 — Blob Storage Setup
+### Prompt 2.2.1 — Create Azure Blob Storage Account
 - **Tool:** Azure MCP Server (Copilot Agent Mode)
-- **Date:**
-- **Prompt:** *(to be filled in)*
-- **Output Rating:** ⬜ Pending
+- **Date:** April 2026
+- **Prompt:**
+```
+Using my Azure subscription and the existing resource group 
+'sports-card-store-rg', create an Azure Blob Storage account with:
+- Storage account name: sportscardstore (or similar available name)
+- Region: Central US (match existing resources)
+- Performance: Standard
+- Redundancy: LRS
+- Create a private container called 'card-images'
+
+IMPORTANT: Do NOT write the storage connection string or access 
+keys into any file. Return in chat only so I can store manually 
+in user secrets.
+```
+- **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
+  - Blob Storage account created successfully ✅
+  - `card-images` container created ✅
+  - Connection string returned in chat only — credentials did NOT enter any file ✅
+  - Security reminder in the prompt was respected — confirms that explicit security instructions in Azure prompts work
+
+---
+
+### Prompt 2.2.2 — Add BlobStorageService to Infrastructure Project
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Prompt:**
+```
+Add Azure Blob Storage support to SportsCardStore.Infrastructure.
+1. Add NuGet package: Azure.Storage.Blobs
+2. Create IBlobStorageService interface in Core/Interfaces/ with:
+   - UploadImageAsync(Stream, string) returns Task<string>
+   - DeleteImageAsync(string) returns Task<bool>
+   - GetImageUrlAsync(string) returns Task<string>
+3. Create BlobStorageService.cs in Infrastructure/Services/ 
+   implementing the interface. Read connection string from 
+   "AzureBlobStorage:ConnectionString" and container name from 
+   "AzureBlobStorage:ContainerName". Include ILogger logging.
+```
+- **Output Rating:** ✅ Great
+- **Notes / What Was Changed:**
+  - Created `Core/Interfaces/` folder unprompted — correct clean architecture placement ✅
+  - `Azure.Storage.Blobs 12.27.0` added to Infrastructure.csproj ✅
+  - Constructor validates both config values on startup — fail fast pattern ✅
+  - `UploadImageAsync` generates unique filename using timestamp + Guid to prevent collisions ✅
+  - Resets stream position before upload ✅
+  - `GetContentType()` helper covers jpg, png, gif, bmp, webp, tiff ✅
+  - `DeleteImageAsync` uses `DeleteIfExistsAsync` — won't throw on missing file ✅
+  - `GetImageUrlAsync` checks existence before returning URL ✅
+  - XML doc comments on interface methods ✅
+  - No credentials anywhere in the generated code ✅
+
+---
+
+### Prompt 2.2.3 — Register BlobStorageService in Program.cs
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Prompt:**
+```
+Register BlobStorageService in Program.cs:
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+Add required using statements. Do not add any credentials to appsettings.json.
+```
+- **Output Rating:** ✅ Great
+- **Notes / What Was Changed:**
+  - Service registered correctly with proper using statements ✅
+  - `appsettings.json` stayed clean — no credentials added ✅
+  - Security lesson from Phase 2.1 successfully carried forward ✅
 
 ---
 
@@ -628,44 +654,42 @@ deserialization. Include error handling and logging via ILogger.
 
 | # | Lesson | Phase It Came From |
 |---|---|---|
-| 1 | Copilot defaults to enterprise/production-scale answers (General Purpose SQL, AD B2C, Docker) — always review cost and complexity assumptions before accepting output | Phase 0 |
-| 2 | Copilot made a smart architectural decision unprompted by splitting Card and CardListing — don't always override AI output, sometimes it knows better | Phase 0 |
-| 3 | A single prompt fix doesn't always cascade — fixing auth in Tech Stack didn't fix the same issue in Azure Services. Always check related sections after a targeted change | Phase 0.2 |
-| 4 | When asking Copilot to delete files, name them explicitly — vague delete prompts often don't take effect | Phase 0.3 |
-| 5 | Copilot proactively added EF Core packages to Infrastructure when upgrading to .NET 10 — it reads context and anticipates next steps | Phase 0.3 |
-| 6 | Copilot created Entities/ and Enums/ subfolder structure unprompted — it applies clean architecture conventions automatically when the project structure signals that intent | Phase 1 |
-| 7 | Always verify PK type consistency — Prompt 1.2 used int Id but project plan specifies Guid. Catch these early before they cascade through multiple files | Phase 1 |
-| 8 | Copilot added timestamp auto-update logic in SaveChanges/SaveChangesAsync unprompted — when the entity has date fields, it infers the pattern and implements it correctly | Phase 1 |
-| 9 | Copilot went well beyond the prompt scope on indexes (6 vs 2 requested) — review all generated indexes before accepting, extra indexes have storage and write performance costs | Phase 1 |
-| 10 | EnsureCreatedAsync() bypasses EF migrations — always use MigrateAsync() when connecting to a real database | Phase 1/2 |
-| 11 | **Critical:** AI-assisted Azure setup will write credentials directly into config files and commit them to source control — always review ANY file that touches connection strings before merging. Never let a credential touch a public repo | Phase 2 |
-| 12 | When credentials are exposed in a public repo, the password must be rotated immediately even if the repo is "just a portfolio project" — bots scan GitHub continuously for exposed credentials | Phase 2 |
-| 13 | Use `dotnet user-secrets` for local dev connection strings and Azure App Service Configuration for production — nothing sensitive ever belongs in appsettings.json in a public repo | Phase 2 |
-| 14 | Add project-specific credential file patterns to .gitignore proactively before creating those files — don't wait until after the file exists | Phase 2 |
+| 1 | Copilot defaults to enterprise/production-scale answers — always review cost and complexity assumptions | Phase 0 |
+| 2 | Copilot made smart architectural decisions unprompted (Card/CardListing split) — don't always override AI output | Phase 0 |
+| 3 | A single prompt fix doesn't cascade — always check related sections after targeted changes | Phase 0.2 |
+| 4 | When asking Copilot to delete files, name them explicitly | Phase 0.3 |
+| 5 | Copilot proactively added EF Core packages to Infrastructure when upgrading .NET — it reads context and anticipates next steps | Phase 0.3 |
+| 6 | Copilot creates correct subfolder structure unprompted when the project signals clean architecture intent | Phase 1 |
+| 7 | Always verify PK type consistency early — int vs Guid cascades through many files | Phase 1 |
+| 8 | Copilot adds timestamp auto-update in SaveChanges unprompted when entities have date fields | Phase 1 |
+| 9 | Copilot exceeds index scope (6 vs 2 requested) — review generated indexes, extras have storage/write costs | Phase 1 |
+| 10 | EnsureCreatedAsync() bypasses EF migrations — always use MigrateAsync() with a real database | Phase 1/2 |
+| 11 | **Critical:** AI-assisted Azure setup writes credentials into config files — always review appsettings.json before merging | Phase 2 |
+| 12 | Exposed credentials in public repos must be rotated immediately — bots scan GitHub continuously | Phase 2 |
+| 13 | Use dotnet user-secrets for local dev, Azure App Service Configuration for production — never appsettings.json | Phase 2 |
+| 14 | Add credential file patterns to .gitignore proactively before creating those files | Phase 2 |
+| 15 | Explicitly including a security reminder in Azure Blob Storage prompts ("Do NOT write to any file") was respected — the lesson from Phase 2.1 carried forward successfully | Phase 2 |
 
 ---
 
 ## Prompt Patterns That Worked Well
 
-> *(Running list of prompt structures that consistently produced good output)*
-
-- Giving Copilot a numbered list of specific changes in one prompt (Prompt 0.2.1) produced clean targeted edits without touching unrelated content
-- Providing full context including technology, output shape, and learning goal in agent prompts produced detailed, actionable documentation
-- Naming files explicitly when asking for deletions produced reliable results (Prompt 0.3.2)
-- Entity model prompts that specify field types, validation rules, and target project produce complete, production-quality output in one shot
-- DbContext prompts that specify Fluent API and a separate configuration class produce well-structured, maintainable EF configuration
-- Seed data prompts that specify real player names and grading company mix produce accurate, domain-appropriate test data
-- Migration prompts that include both the `add` and `update` commands in sequence produce a complete, runnable migration workflow
+- Numbered list of specific changes in one prompt produces clean targeted edits (Prompt 0.2.1)
+- Providing technology, output shape, and learning goal in agent prompts produces detailed documentation
+- Naming files explicitly when asking for deletions (Prompt 0.3.2)
+- Entity model prompts with field types, validation rules, and target project = production-quality output
+- DbContext prompts specifying Fluent API + separate configuration class = well-structured EF config
+- Seed data prompts specifying real player names and grading company mix = accurate domain data
+- Migration prompts including both `add` and `update` commands = complete runnable workflow
+- **Including explicit security instructions in Azure prompts ("Do NOT write credentials to any file") prevents credential exposure**
 
 ---
 
 ## Prompt Patterns That Didn't Work
 
-> *(What to avoid next time)*
-
-- Broad single prompts that touch multiple sections can miss consistency issues across the document — follow up with a review pass after any structural change
-- Vague delete prompts ("remove the WeatherForecast files") don't reliably produce file deletions — always name files explicitly with their full path
-- Azure infrastructure prompts will write connection strings into config files without being asked — always review appsettings.json immediately after any Azure setup prompt before committing
+- Broad prompts touching multiple sections miss consistency issues — review related sections after changes
+- Vague delete prompts don't reliably delete files — name files explicitly with full paths
+- Azure infrastructure prompts without security reminders will write connection strings to config files — always include the security instruction
 
 ---
 
