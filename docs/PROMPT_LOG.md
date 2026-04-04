@@ -374,7 +374,7 @@ on PlayerName and Year. Put the DbContext in the Infrastructure project.
 
 ### Prompt 1.4 — Seed Data
 - **Tool:** GitHub Copilot Chat
-- **Date:**
+- **Date:** April 2026
 - **Prompt:**
 ```
 Create an EF Core data seeder class that seeds 10 realistic sports 
@@ -383,8 +383,17 @@ football, and basketball. Include a mix of graded (PSA, BGS) and raw
 cards with realistic prices between $5 and $500. Wire it up to run 
 on app startup in development environment only.
 ```
-- **Output Rating:** ⬜ Pending
+- **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
+  - Created `Data/Seeders/` subfolder unprompted — consistent folder discipline throughout
+  - Idempotent guard: `if (await context.SportsCards.AnyAsync()) return` — won't double-seed on app restart
+  - 10 realistic cards: Trout, Acuna, Jeter (baseball), Brady, Herbert, Burrow (football), LeBron, Luka, Jordan, Zion (basketball)
+  - All three grading companies represented: PSA, BGS, SGC — plus Raw
+  - Raw cards correctly have `Grade = null` — consistent with the nullable decision from Prompt 1.2
+  - Prices range from $45 to $495 — within the $5-$500 spec
+  - Card details (brands, card numbers, descriptions) are accurate to real cards
+  - Program.cs updated correctly: DbContext registered via DI, development-only seeding block, exception handling with logger, proper scoped service resolution
+  - **Important flag for Phase 2:** Program.cs uses `EnsureCreatedAsync()` which creates the DB directly from the model and bypasses EF migrations entirely. Must be swapped to `context.Database.MigrateAsync()` before connecting to Azure SQL in Phase 2
 
 ---
 
@@ -537,6 +546,7 @@ deserialization. Include error handling and logging via ILogger.
 | 7 | Always verify PK type consistency — Prompt 1.2 used int Id but project plan specifies Guid. Catch these early before they cascade through multiple files | Phase 1 |
 | 8 | Copilot added timestamp auto-update logic in SaveChanges/SaveChangesAsync unprompted — when the entity has date fields, it infers the pattern and implements it correctly | Phase 1 |
 | 9 | Copilot went well beyond the prompt scope on indexes (6 vs 2 requested) — review all generated indexes before accepting, extra indexes have storage and write performance costs | Phase 1 |
+| 10 | EnsureCreatedAsync() bypasses EF migrations — fine for development but must be swapped to MigrateAsync() before connecting to Azure SQL in production | Phase 1 |
 
 ---
 
@@ -549,6 +559,7 @@ deserialization. Include error handling and logging via ILogger.
 - Naming files explicitly when asking for deletions produced reliable results (Prompt 0.3.2)
 - Entity model prompts that specify field types, validation rules, and target project produce complete, production-quality output in one shot
 - DbContext prompts that specify Fluent API and a separate configuration class produce well-structured, maintainable EF configuration
+- Seed data prompts that specify real player names and grading company mix produce accurate, domain-appropriate test data
 
 ---
 
