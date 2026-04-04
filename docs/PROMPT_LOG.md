@@ -1,4 +1,5 @@
 # Sports Card Store — AI Prompt Engineering Log
+
 > **Purpose:** Living document tracking every prompt used to build the Sports Card Store project via GitHub Copilot and Claude. Update this after every session. This document serves as a reference, a portfolio artifact, and a learning record.
 
 ---
@@ -15,32 +16,35 @@
 
 ## Project Context
 
-| Item | Detail |
-|---|---|
-| **Project Name** | Sports Card Store |
-| **Stack** | ASP.NET Core 10, Azure SQL, Azure Blob Storage, Azure App Service, Stripe |
-| **Architecture** | Clean Architecture (API / Core / Infrastructure / Tests) |
-| **Primary AI Tools** | GitHub Copilot (VS Code), Claude, Azure MCP Server, Playwright MCP |
-| **Goal** | Portfolio project demonstrating AI-assisted full-stack development |
-| **Started** | April 2026 |
+| Item                 | Detail                                                                    |
+| -------------------- | ------------------------------------------------------------------------- |
+| **Project Name**     | Sports Card Store                                                         |
+| **Stack**            | ASP.NET Core 10, Azure SQL, Azure Blob Storage, Azure App Service, Stripe |
+| **Architecture**     | Clean Architecture (API / Core / Infrastructure / Tests)                  |
+| **Primary AI Tools** | GitHub Copilot (VS Code), Claude, Azure MCP Server, Playwright MCP        |
+| **Goal**             | Portfolio project demonstrating AI-assisted full-stack development        |
+| **Started**          | April 2026                                                                |
 
 ---
 
 ## Phase 0 — Project Planning
 
 ### Prompt 0.1 — Project Plan Generation
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Help me write a PROJECT_PLAN.md for an ASP.NET Core 8 ecommerce 
-site for selling sports cards on Azure. Include sections for: 
-project overview, entity list with fields, Azure services needed, 
-API endpoint plan, AI agents planned, and tech stack decisions. 
-I want clean architecture with separate API, Core, Infrastructure, 
-and Tests projects. I'll use Azure SQL, Blob Storage, App Service, 
+Help me write a PROJECT_PLAN.md for an ASP.NET Core 8 ecommerce
+site for selling sports cards on Azure. Include sections for:
+project overview, entity list with fields, Azure services needed,
+API endpoint plan, AI agents planned, and tech stack decisions.
+I want clean architecture with separate API, Core, Infrastructure,
+and Tests projects. I'll use Azure SQL, Blob Storage, App Service,
 Stripe for payments, and GitHub Copilot for AI-assisted development.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Copilot produced a 7.5/10 first draft — better than average for a single prompt
@@ -55,19 +59,22 @@ Stripe for payments, and GitHub Copilot for AI-assisted development.
 ## Phase 0.2 — Plan Refinement
 
 ### Prompt 0.2.1 — Fix Azure Services (Cost & CI/CD)
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
 In the PROJECT_PLAN.md Azure Services section, make these changes:
-1. Replace Azure SQL "General Purpose tier" with Basic/Standard S0 tier 
+1. Replace Azure SQL "General Purpose tier" with Basic/Standard S0 tier
    (~$5-15/month), appropriate for development and portfolio projects.
-2. In DevOps & Deployment, replace "GitHub Actions" with "Azure Pipelines" 
+2. In DevOps & Deployment, replace "GitHub Actions" with "Azure Pipelines"
    as the CI/CD tool.
-3. Move Docker to a "Future Consideration" note rather than an active 
+3. Move Docker to a "Future Consideration" note rather than an active
    planned service.
 Keep all other Azure services as-is.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - All three changes applied cleanly with no issues
@@ -75,16 +82,19 @@ Keep all other Azure services as-is.
 ---
 
 ### Prompt 0.2.2 — Fix Authentication Approach
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-In the PROJECT_PLAN.md Tech Stack Decisions section under Authentication 
-& Authorization, add a note that Azure AD B2C is a future enhancement. 
-The initial implementation will use ASP.NET Core Identity with JWT Bearer 
-Tokens only. This keeps Phase 1 complexity manageable for a portfolio 
+In the PROJECT_PLAN.md Tech Stack Decisions section under Authentication
+& Authorization, add a note that Azure AD B2C is a future enhancement.
+The initial implementation will use ASP.NET Core Identity with JWT Bearer
+Tokens only. This keeps Phase 1 complexity manageable for a portfolio
 project.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Tech Stack section correctly split into Phase 1 and Future Enhancements
@@ -93,15 +103,18 @@ project.
 ---
 
 ### Prompt 0.2.3 — Fix Deprecated QnA Maker Reference
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-In the PROJECT_PLAN.md AI Agents section under Customer Service Bot, 
-replace "QnA Maker" with "Azure AI Language" as QnA Maker has been 
-deprecated by Microsoft. Also add an alternative option of calling 
+In the PROJECT_PLAN.md AI Agents section under Customer Service Bot,
+replace "QnA Maker" with "Azure AI Language" as QnA Maker has been
+deprecated by Microsoft. Also add an alternative option of calling
 the Claude or OpenAI API directly as a simpler implementation path.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Clean replacement, alternative Claude/OpenAI path added as requested
@@ -109,19 +122,22 @@ the Claude or OpenAI API directly as a simpler implementation path.
 ---
 
 ### Prompt 0.2.4 — Add Personal Infrastructure Section
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Add a new section to PROJECT_PLAN.md called "Personal Infrastructure 
+Add a new section to PROJECT_PLAN.md called "Personal Infrastructure
 and Data Assets" after the Project Overview section. Include:
-- Existing card inventory tracked in a detailed Excel spreadsheet 
+- Existing card inventory tracked in a detailed Excel spreadsheet
   (primary data source for the Inventory Import Agent)
-- Epson ES-400 II duplex scanner for card image digitization 
+- Epson ES-400 II duplex scanner for card image digitization
   (drives the image upload pipeline design)
-- Active WhatNot card breaking business (future integration 
+- Active WhatNot card breaking business (future integration
   consideration for live selling features)
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Section placed correctly after Project Overview
@@ -130,43 +146,46 @@ and Data Assets" after the Project Overview section. Include:
 ---
 
 ### Prompt 0.2.5 — Replace Generic AI Agents with Specific Hands-On Builds
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-In PROJECT_PLAN.md replace the generic AI Agents Planned section with 
-these three specific hands-on agent builds that will be actively 
+In PROJECT_PLAN.md replace the generic AI Agents Planned section with
+these three specific hands-on agent builds that will be actively
 developed as part of this project:
 
 1. Card Listing Agent
-   - Purpose: Accept a raw card description string and generate a 
+   - Purpose: Accept a raw card description string and generate a
      complete optimized product listing
    - Technology: C# class using HttpClient to call Claude API
-   - Output: Structured CardListing object with Title, Description, 
+   - Output: Structured CardListing object with Title, Description,
      SuggestedPrice, Tags, and Category
-   - Learning Goal: Prompt pipelines, structured output parsing, 
+   - Learning Goal: Prompt pipelines, structured output parsing,
      calling AI APIs from C#
 
 2. Inventory Import Agent
-   - Purpose: Process existing Excel card tracker and import cards 
+   - Purpose: Process existing Excel card tracker and import cards
      into the database
-   - Technology: C# with EPPlus or ClosedXML for Excel parsing, 
+   - Technology: C# with EPPlus or ClosedXML for Excel parsing,
      maps columns to CardListing entities
    - Output: Validated SQL inserts or API calls to populate the database
-   - Learning Goal: File parsing, multi-step agent chains, tool use 
+   - Learning Goal: File parsing, multi-step agent chains, tool use
      and function calling
 
 3. Price Research Agent
-   - Purpose: Research recent sold listings and return a suggested 
+   - Purpose: Research recent sold listings and return a suggested
      price range for a given card
    - Technology: C# agent with web search integration
    - Output: Price range recommendation with market data sources
-   - Learning Goal: Agents with web search tools, ReAct-style 
+   - Learning Goal: Agents with web search tools, ReAct-style
      reasoning loops, grounding AI output in real data
 
-Keep the future AI features (Card Recognition, Recommendation Engine, 
+Keep the future AI features (Card Recognition, Recommendation Engine,
 Customer Service Bot) as a separate "Future AI Features" subsection.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - All three agents documented with correct technology, output, and learning goals
@@ -176,24 +195,27 @@ Customer Service Bot) as a separate "Future AI Features" subsection.
 ---
 
 ### Prompt 0.2.6 — Add Azure MCP to Development Workflow
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Add a new subsection to the Tech Stack Decisions section called 
+Add a new subsection to the Tech Stack Decisions section called
 "AI-Assisted Development Tools" with the following:
 
-- GitHub Copilot: Primary AI coding assistant in VS Code and 
+- GitHub Copilot: Primary AI coding assistant in VS Code and
   Visual Studio 2022
-- Azure MCP Server: Used in Copilot Agent Mode to create and 
-  configure Azure resources directly from VS Code chat. Configured 
+- Azure MCP Server: Used in Copilot Agent Mode to create and
+  configure Azure resources directly from VS Code chat. Configured
   via .vscode/mcp.json using @azure/mcp package.
-- Playwright MCP: Browser automation of Azure Portal for 
+- Playwright MCP: Browser automation of Azure Portal for
   verification and GUI tasks not covered by Azure MCP
 - Claude: Architecture planning, prompt refinement, and code review
-- Prompt Engineering Log: Living document tracking all prompts used, 
+- Prompt Engineering Log: Living document tracking all prompts used,
   output ratings, and lessons learned throughout development
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Section added cleanly to Tech Stack Decisions
@@ -202,16 +224,19 @@ Add a new subsection to the Tech Stack Decisions section called
 ---
 
 ### Prompt 0.2.7 — Fix AD B2C in Azure Services Section
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-In PROJECT_PLAN.md under the Azure Services Needed section, under 
-Authentication & Security, add a note to Azure Active Directory B2C 
-marking it as a "Future Enhancement" consistent with the Tech Stack 
-Decisions section. Phase 1 will use ASP.NET Core Identity and JWT 
+In PROJECT_PLAN.md under the Azure Services Needed section, under
+Authentication & Security, add a note to Azure Active Directory B2C
+marking it as a "Future Enhancement" consistent with the Tech Stack
+Decisions section. Phase 1 will use ASP.NET Core Identity and JWT
 only. Azure AD B2C will be added in a later phase for social logins.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Needed because Prompt 0.2.2 fixed Tech Stack but left Azure Services section out of sync
@@ -221,15 +246,18 @@ only. Azure AD B2C will be added in a later phase for social logins.
 ## Phase 0.3 — Solution Cleanup & .NET Upgrade
 
 ### Prompt 0.3.1 — Remove WeatherForecast Placeholder Files
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-I have a default ASP.NET Core 8 Web API project that still contains 
-the WeatherForecast.cs placeholder file and its controller. Remove 
-both files and update Program.cs to remove any references to them. 
+I have a default ASP.NET Core 8 Web API project that still contains
+the WeatherForecast.cs placeholder file and its controller. Remove
+both files and update Program.cs to remove any references to them.
 The project is SportsCardStore.API.
 ```
+
 - **Output Rating:** ⚠️ Needed Tweaking
 - **Notes / What Was Changed:**
   - First attempt did not remove the files — WeatherForecast.cs and WeatherForecastController.cs remained in the repo after merge
@@ -238,17 +266,20 @@ The project is SportsCardStore.API.
 ---
 
 ### Prompt 0.3.2 — Remove WeatherForecast Files (Follow-up)
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
 Delete these two files from the SportsCardStore.API project:
 1. WeatherForecast.cs (in the root of the API project)
 2. Controllers/WeatherForecastController.cs
 
-The Program.cs is already clean with no references to these files 
+The Program.cs is already clean with no references to these files
 so no other changes are needed. Just delete both files.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Both files removed cleanly on second attempt
@@ -257,16 +288,19 @@ so no other changes are needed. Just delete both files.
 ---
 
 ### Prompt 0.3.3 — Remove Placeholder Class1.cs Files
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Remove all placeholder files from the solution: Class1.cs from 
-SportsCardStore.Core, SportsCardStore.Infrastructure, and 
-SportsCardStore.Shared, and UnitTest1.cs from all test projects. 
-These are default template files and should be deleted before 
+Remove all placeholder files from the solution: Class1.cs from
+SportsCardStore.Core, SportsCardStore.Infrastructure, and
+SportsCardStore.Shared, and UnitTest1.cs from all test projects.
+These are default template files and should be deleted before
 real code is added.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - All placeholder files removed cleanly
@@ -275,21 +309,24 @@ real code is added.
 ---
 
 ### Prompt 0.3.4 — Upgrade Solution to .NET 10
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Update all .csproj files in this solution from net8.0 to net10.0. 
-This includes all projects in the src folder (SportsCardStore.API, 
-SportsCardStore.Core, SportsCardStore.Infrastructure, 
-SportsCardStore.Shared) and all projects in the tests folder 
-(SportsCardStore.Tests, SportsCardStore.UnitTests, 
-SportsCardStore.IntegrationTests, SportsCardStore.FunctionalTests). 
-Also update the Swashbuckle.AspNetCore NuGet package reference in 
-the API project to the latest version compatible with .NET 10. 
-After updating, run dotnet restore to confirm packages resolve 
+Update all .csproj files in this solution from net8.0 to net10.0.
+This includes all projects in the src folder (SportsCardStore.API,
+SportsCardStore.Core, SportsCardStore.Infrastructure,
+SportsCardStore.Shared) and all projects in the tests folder
+(SportsCardStore.Tests, SportsCardStore.UnitTests,
+SportsCardStore.IntegrationTests, SportsCardStore.FunctionalTests).
+Also update the Swashbuckle.AspNetCore NuGet package reference in
+the API project to the latest version compatible with .NET 10.
+After updating, run dotnet restore to confirm packages resolve
 correctly.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - All src and test projects updated to net10.0 cleanly
@@ -303,16 +340,19 @@ correctly.
 ## Phase 1 — Solution Scaffolding & Data Model
 
 ### Prompt 1.1 — Solution Structure
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-I'm building an ASP.NET Core 8 Web API ecommerce site for selling 
-sports cards hosted on Azure. Set up the solution structure with 
-separate projects for: API, Core (models/interfaces), Infrastructure 
-(EF Core/data access), and Tests. Use clean architecture principles. 
+I'm building an ASP.NET Core 8 Web API ecommerce site for selling
+sports cards hosted on Azure. Set up the solution structure with
+separate projects for: API, Core (models/interfaces), Infrastructure
+(EF Core/data access), and Tests. Use clean architecture principles.
 Show me the folder structure and the .csproj references I need.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - All four src projects created correctly with proper project references
@@ -322,18 +362,21 @@ Show me the folder structure and the .csproj references I need.
 ---
 
 ### Prompt 1.2 — SportsCard Entity Model
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Create an Entity Framework Core entity model called SportsCard with 
-these fields: Id (int), PlayerName, Year (int), Brand, CardNumber, 
-Sport, Team, Grade (decimal), GradingCompany (PSA/BGS/SGC/Raw), 
-Condition, Price (decimal), Quantity (int), ImageUrl, Description, 
-IsAvailable (bool), CreatedDate, UpdatedDate. Add data annotations 
-for validation and include a Category enum for Baseball, Football, 
+Create an Entity Framework Core entity model called SportsCard with
+these fields: Id (int), PlayerName, Year (int), Brand, CardNumber,
+Sport, Team, Grade (decimal), GradingCompany (PSA/BGS/SGC/Raw),
+Condition, Price (decimal), Quantity (int), ImageUrl, Description,
+IsAvailable (bool), CreatedDate, UpdatedDate. Add data annotations
+for validation and include a Category enum for Baseball, Football,
 Basketball, Hockey. Put this in the Core project.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Created `Entities/` and `Enums/` subfolder structure unprompted
@@ -346,15 +389,18 @@ Basketball, Hockey. Put this in the Core project.
 ---
 
 ### Prompt 1.3 — DbContext & EF Configuration
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Create an AppDbContext using Entity Framework Core for the SportsCard 
-entity. Configure it to use Azure SQL. Use Fluent API in a separate 
-EntityTypeConfiguration class for SportsCard. Add appropriate indexes 
+Create an AppDbContext using Entity Framework Core for the SportsCard
+entity. Configure it to use Azure SQL. Use Fluent API in a separate
+EntityTypeConfiguration class for SportsCard. Add appropriate indexes
 on PlayerName and Year. Put the DbContext in the Infrastructure project.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Created `Data/` and `Data/Configurations/` subfolder structure unprompted
@@ -369,16 +415,19 @@ on PlayerName and Year. Put the DbContext in the Infrastructure project.
 ---
 
 ### Prompt 1.4 — Seed Data
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Create an EF Core data seeder class that seeds 10 realistic sports 
-cards into the SportsCard table. Use real players across baseball, 
-football, and basketball. Include a mix of graded (PSA, BGS) and raw 
-cards with realistic prices between $5 and $500. Wire it up to run 
+Create an EF Core data seeder class that seeds 10 realistic sports
+cards into the SportsCard table. Use real players across baseball,
+football, and basketball. Include a mix of graded (PSA, BGS) and raw
+cards with realistic prices between $5 and $500. Wire it up to run
 on app startup in development environment only.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Created `Data/Seeders/` subfolder unprompted
@@ -393,16 +442,19 @@ on app startup in development environment only.
 ## Phase 2 — Azure Infrastructure Setup
 
 ### Prompt 2.1 — Azure Resource Group & Core Services
+
 - **Tool:** Azure MCP Server (Copilot Agent Mode)
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Using my Azure subscription, create a Resource Group called 
-'sports-card-store-rg' in East US. Then create an Azure SQL Server 
-called 'sportscard-sql-server' with a Basic tier database called 
-'SportscardDb'. Create an App Service Plan (Basic B1) and a Web App 
+Using my Azure subscription, create a Resource Group called
+'sports-card-store-rg' in East US. Then create an Azure SQL Server
+called 'sportscard-sql-server' with a Basic tier database called
+'SportscardDb'. Create an App Service Plan (Basic B1) and a Web App
 called 'sportscard-api'. Return the connection strings I need.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Resource Group in East US, SQL Server in Central US (capacity fallback) ✅
@@ -413,6 +465,7 @@ called 'sportscard-api'. Return the connection strings I need.
 ---
 
 ### Phase 2 Security Remediation — Credentials Exposed in Public Repo
+
 - **Date:** April 2026
 - **What Happened:** Full Azure SQL password committed to public repo in `appsettings.json` and `AZURE_DEPLOYMENT_SUMMARY.md`
 - **Actions Taken:**
@@ -423,20 +476,23 @@ called 'sportscard-api'. Return the connection strings I need.
 ---
 
 ### Prompt 2.3 — Set Up User Secrets for Local Development
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Set up .NET user secrets for the SportsCardStore.API project to 
+Set up .NET user secrets for the SportsCardStore.API project to
 store the Azure SQL connection string securely for local development.
 
 1. Run: dotnet user-secrets init --project src/SportsCardStore.API
-2. Run: dotnet user-secrets set "ConnectionStrings:DefaultConnection" 
+2. Run: dotnet user-secrets set "ConnectionStrings:DefaultConnection"
    "PLACEHOLDER" --project src/SportsCardStore.API
-3. Update Program.cs to read from user secrets in Development and 
+3. Update Program.cs to read from user secrets in Development and
    Azure App Service Configuration in Production.
 4. Show me where the user secrets file lives locally.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - User secrets initialized, connection string stored locally (never committed)
@@ -445,18 +501,21 @@ store the Azure SQL connection string securely for local development.
 ---
 
 ### Prompt 2.4 — MigrateAsync and InitialCreate Migration
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
 Replace EnsureCreatedAsync() with MigrateAsync() in Program.cs.
-Create migration: dotnet ef migrations add InitialCreate 
-  --project src/SportsCardStore.Infrastructure 
+Create migration: dotnet ef migrations add InitialCreate
+  --project src/SportsCardStore.Infrastructure
   --startup-project src/SportsCardStore.API
-Apply migration: dotnet ef database update 
-  --project src/SportsCardStore.Infrastructure 
+Apply migration: dotnet ef database update
+  --project src/SportsCardStore.Infrastructure
   --startup-project src/SportsCardStore.API
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - `EnsureCreatedAsync()` replaced with `MigrateAsync()` ✅
@@ -468,11 +527,13 @@ Apply migration: dotnet ef database update
 ---
 
 ### Prompt 2.2.1 — Create Azure Blob Storage Account
+
 - **Tool:** Azure MCP Server (Copilot Agent Mode)
 - **Date:** April 2026
 - **Prompt:**
+
 ```
-Using my Azure subscription and the existing resource group 
+Using my Azure subscription and the existing resource group
 'sports-card-store-rg', create an Azure Blob Storage account with:
 - Storage account name: sportscardstore (or similar available name)
 - Region: Central US (match existing resources)
@@ -480,10 +541,11 @@ Using my Azure subscription and the existing resource group
 - Redundancy: LRS
 - Create a private container called 'card-images'
 
-IMPORTANT: Do NOT write the storage connection string or access 
-keys into any file. Return in chat only so I can store manually 
+IMPORTANT: Do NOT write the storage connection string or access
+keys into any file. Return in chat only so I can store manually
 in user secrets.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Blob Storage account created successfully ✅
@@ -494,9 +556,11 @@ in user secrets.
 ---
 
 ### Prompt 2.2.2 — Add BlobStorageService to Infrastructure Project
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
 Add Azure Blob Storage support to SportsCardStore.Infrastructure.
 1. Add NuGet package: Azure.Storage.Blobs
@@ -504,11 +568,12 @@ Add Azure Blob Storage support to SportsCardStore.Infrastructure.
    - UploadImageAsync(Stream, string) returns Task<string>
    - DeleteImageAsync(string) returns Task<bool>
    - GetImageUrlAsync(string) returns Task<string>
-3. Create BlobStorageService.cs in Infrastructure/Services/ 
-   implementing the interface. Read connection string from 
-   "AzureBlobStorage:ConnectionString" and container name from 
+3. Create BlobStorageService.cs in Infrastructure/Services/
+   implementing the interface. Read connection string from
+   "AzureBlobStorage:ConnectionString" and container name from
    "AzureBlobStorage:ContainerName". Include ILogger logging.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Created `Core/Interfaces/` folder unprompted — correct clean architecture placement ✅
@@ -525,14 +590,17 @@ Add Azure Blob Storage support to SportsCardStore.Infrastructure.
 ---
 
 ### Prompt 2.2.3 — Register BlobStorageService in Program.cs
+
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Prompt:**
+
 ```
 Register BlobStorageService in Program.cs:
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 Add required using statements. Do not add any credentials to appsettings.json.
 ```
+
 - **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
   - Service registered correctly with proper using statements ✅
@@ -544,34 +612,51 @@ Add required using statements. Do not add any credentials to appsettings.json.
 ## Phase 3 — API Layer
 
 ### Prompt 3.1 — SportsCards Controller
+
 - **Tool:** GitHub Copilot Chat
-- **Date:**
+- **Date:** April 2026
 - **Prompt:**
+
 ```
 Create a SportsCardsController in ASP.NET Core 8 with these endpoints:
-GET /api/cards (all cards, with optional query params for sport, 
-brand, grading company, min/max price), GET /api/cards/{id}, 
-POST /api/cards, PUT /api/cards/{id}, DELETE /api/cards/{id}. 
-Use a service interface (ISportsCardService) and inject it. 
-Return proper HTTP status codes. Include basic pagination support 
+GET /api/cards (all cards, with optional query params for sport,
+brand, grading company, min/max price), GET /api/cards/{id},
+POST /api/cards, PUT /api/cards/{id}, DELETE /api/cards/{id}.
+Use a service interface (ISportsCardService) and inject it.
+Return proper HTTP status codes. Include basic pagination support
 on the GET all endpoint.
 ```
-- **Output Rating:** ⬜ Pending
+
+- **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
+  - Created comprehensive SportsCardsController with all 5 CRUD endpoints at `/api/sportscards` route
+  - Created ISportsCardService interface with advanced filtering (sport, brand, playerName, team, year, price range, availability) and PagedResult<T> response
+  - Implemented SportsCardService with full EF Core integration, comprehensive logging, and parameter validation
+  - Created SportsCardDtos.cs with CreateSportsCardRequest, UpdateSportsCardRequest, SportsCardResponse, and PagedSportsCardResponse models
+  - All DTOs include proper validation attributes (Required, Range, MaxLength, Url)
+  - Controller includes proper HTTP status codes (200, 201, 204, 400, 404, 500) with ProducesResponseType attributes
+  - Added comprehensive error handling with structured logging throughout
+  - Updated Program.cs to register ISportsCardService in dependency injection
+  - Updated SportsCardStore.API.http with comprehensive test endpoints for all CRUD operations
+  - **Build successful** — all compilation errors resolved, code pushed to repository ✅
+  - **Git workflow lesson:** When merge conflicts occur during rebase/pull, sometimes it's faster to recreate clean files than resolve complex conflicts
 
 ---
 
 ### Prompt 3.2 — Unit Tests
+
 - **Tool:** GitHub Copilot Chat
 - **Date:**
 - **Prompt:**
+
 ```
-Generate xUnit unit tests for SportsCardService covering: GetAll 
-with filters applied, GetById returns null for missing id, Create 
-validates required fields, and Update returns 404 for missing card. 
-Use Moq for mocking the repository. Follow Arrange/Act/Assert pattern 
+Generate xUnit unit tests for SportsCardService covering: GetAll
+with filters applied, GetById returns null for missing id, Create
+validates required fields, and Update returns 404 for missing card.
+Use Moq for mocking the repository. Follow Arrange/Act/Assert pattern
 and add XML doc comments explaining what each test validates.
 ```
+
 - **Output Rating:** ⬜ Pending
 - **Notes / What Was Changed:**
 
@@ -579,59 +664,64 @@ and add XML doc comments explaining what each test validates.
 
 ## Phase 4 — Frontend
 
-*(Prompts to be added as this phase begins)*
+_(Prompts to be added as this phase begins)_
 
 ---
 
 ## Phase 5 — Stripe Payments
 
-*(Prompts to be added as this phase begins)*
+_(Prompts to be added as this phase begins)_
 
 ---
 
 ## Phase 6 — Image Upload Pipeline
 
-*(Prompts to be added as this phase begins)*
+_(Prompts to be added as this phase begins)_
 
 ---
 
 ## Phase 7 — Admin Panel
 
-*(Prompts to be added as this phase begins)*
+_(Prompts to be added as this phase begins)_
 
 ---
 
 ## Phase 8 — AI Agents
 
 ### Prompt 8.1 — Card Listing Agent (Scaffold)
+
 - **Tool:** GitHub Copilot Chat
 - **Date:**
 - **Prompt:**
+
 ```
-Create a C# class called CardListingAgent that accepts a raw card 
-description string, calls the Anthropic Claude API using HttpClient, 
-and returns a structured CardListing object with Title, Description, 
-SuggestedPrice, Tags, and Category. Use System.Text.Json for 
+Create a C# class called CardListingAgent that accepts a raw card
+description string, calls the Anthropic Claude API using HttpClient,
+and returns a structured CardListing object with Title, Description,
+SuggestedPrice, Tags, and Category. Use System.Text.Json for
 deserialization. Include error handling and logging via ILogger.
 ```
+
 - **Output Rating:** ⬜ Pending
 - **Notes / What Was Changed:**
 
 ---
 
 ### Prompt 8.2 — Inventory Import Agent
-- **Tool:** *(to be determined)*
+
+- **Tool:** _(to be determined)_
 - **Date:**
-- **Prompt:** *(to be filled in)*
+- **Prompt:** _(to be filled in)_
 - **Output Rating:** ⬜ Pending
 - **Notes / What Was Changed:**
 
 ---
 
 ### Prompt 8.3 — Price Research Agent
-- **Tool:** *(to be determined)*
+
+- **Tool:** _(to be determined)_
 - **Date:**
-- **Prompt:** *(to be filled in)*
+- **Prompt:** _(to be filled in)_
 - **Output Rating:** ⬜ Pending
 - **Notes / What Was Changed:**
 
@@ -640,9 +730,10 @@ deserialization. Include error handling and logging via ILogger.
 ## CI/CD Pipeline
 
 ### Prompt CI.1 — Azure Pipelines YAML Pipeline
+
 - **Tool:** GitHub Copilot Chat
 - **Date:**
-- **Prompt:** *(to be filled in when ready)*
+- **Prompt:** _(to be filled in when ready)_
 - **Output Rating:** ⬜ Pending
 - **Notes / What Was Changed:**
 
@@ -650,25 +741,25 @@ deserialization. Include error handling and logging via ILogger.
 
 ## Lessons Learned
 
-> *(Update this section regularly — these become your interview talking points)*
+> _(Update this section regularly — these become your interview talking points)_
 
-| # | Lesson | Phase It Came From |
-|---|---|---|
-| 1 | Copilot defaults to enterprise/production-scale answers — always review cost and complexity assumptions | Phase 0 |
-| 2 | Copilot made smart architectural decisions unprompted (Card/CardListing split) — don't always override AI output | Phase 0 |
-| 3 | A single prompt fix doesn't cascade — always check related sections after targeted changes | Phase 0.2 |
-| 4 | When asking Copilot to delete files, name them explicitly | Phase 0.3 |
-| 5 | Copilot proactively added EF Core packages to Infrastructure when upgrading .NET — it reads context and anticipates next steps | Phase 0.3 |
-| 6 | Copilot creates correct subfolder structure unprompted when the project signals clean architecture intent | Phase 1 |
-| 7 | Always verify PK type consistency early — int vs Guid cascades through many files | Phase 1 |
-| 8 | Copilot adds timestamp auto-update in SaveChanges unprompted when entities have date fields | Phase 1 |
-| 9 | Copilot exceeds index scope (6 vs 2 requested) — review generated indexes, extras have storage/write costs | Phase 1 |
-| 10 | EnsureCreatedAsync() bypasses EF migrations — always use MigrateAsync() with a real database | Phase 1/2 |
-| 11 | **Critical:** AI-assisted Azure setup writes credentials into config files — always review appsettings.json before merging | Phase 2 |
-| 12 | Exposed credentials in public repos must be rotated immediately — bots scan GitHub continuously | Phase 2 |
-| 13 | Use dotnet user-secrets for local dev, Azure App Service Configuration for production — never appsettings.json | Phase 2 |
-| 14 | Add credential file patterns to .gitignore proactively before creating those files | Phase 2 |
-| 15 | Explicitly including a security reminder in Azure Blob Storage prompts ("Do NOT write to any file") was respected — the lesson from Phase 2.1 carried forward successfully | Phase 2 |
+| #   | Lesson                                                                                                                                                                     | Phase It Came From |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| 1   | Copilot defaults to enterprise/production-scale answers — always review cost and complexity assumptions                                                                    | Phase 0            |
+| 2   | Copilot made smart architectural decisions unprompted (Card/CardListing split) — don't always override AI output                                                           | Phase 0            |
+| 3   | A single prompt fix doesn't cascade — always check related sections after targeted changes                                                                                 | Phase 0.2          |
+| 4   | When asking Copilot to delete files, name them explicitly                                                                                                                  | Phase 0.3          |
+| 5   | Copilot proactively added EF Core packages to Infrastructure when upgrading .NET — it reads context and anticipates next steps                                             | Phase 0.3          |
+| 6   | Copilot creates correct subfolder structure unprompted when the project signals clean architecture intent                                                                  | Phase 1            |
+| 7   | Always verify PK type consistency early — int vs Guid cascades through many files                                                                                          | Phase 1            |
+| 8   | Copilot adds timestamp auto-update in SaveChanges unprompted when entities have date fields                                                                                | Phase 1            |
+| 9   | Copilot exceeds index scope (6 vs 2 requested) — review generated indexes, extras have storage/write costs                                                                 | Phase 1            |
+| 10  | EnsureCreatedAsync() bypasses EF migrations — always use MigrateAsync() with a real database                                                                               | Phase 1/2          |
+| 11  | **Critical:** AI-assisted Azure setup writes credentials into config files — always review appsettings.json before merging                                                 | Phase 2            |
+| 12  | Exposed credentials in public repos must be rotated immediately — bots scan GitHub continuously                                                                            | Phase 2            |
+| 13  | Use dotnet user-secrets for local dev, Azure App Service Configuration for production — never appsettings.json                                                             | Phase 2            |
+| 14  | Add credential file patterns to .gitignore proactively before creating those files                                                                                         | Phase 2            |
+| 15  | Explicitly including a security reminder in Azure Blob Storage prompts ("Do NOT write to any file") was respected — the lesson from Phase 2.1 carried forward successfully | Phase 2            |
 
 ---
 
@@ -693,4 +784,4 @@ deserialization. Include error handling and logging via ILogger.
 
 ---
 
-*Last Updated: April 2026*
+_Last Updated: April 2026_
