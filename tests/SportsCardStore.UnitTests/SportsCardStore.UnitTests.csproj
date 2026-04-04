@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SportsCardStore.Core\SportsCardStore.Core.csproj" />
+    <ProjectReference Include="..\..\src\SportsCardStore.Infrastructure\SportsCardStore.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\SportsCardStore.API\SportsCardStore.API.csproj" />
     <ProjectReference Include="..\..\src\SportsCardStore.Shared\SportsCardStore.Shared.csproj" />
   </ItemGroup>
 
