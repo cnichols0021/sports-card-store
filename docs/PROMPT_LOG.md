@@ -368,7 +368,7 @@ on PlayerName and Year. Put the DbContext in the Infrastructure project.
   - Enum conversions to `int` via `HasConversion<int>()` for `Sport` and `GradingCompany`
   - `HasDefaultValueSql("GETUTCDATE()")` on date fields — correct SQL Server pattern
   - Added **six indexes** — went well beyond the two requested: PlayerName, Year, composite PlayerName+Year, Sport, IsAvailable, CreatedDate
-  - **Minor issue:** `AppDbContext` calls both `ApplyConfiguration(new SportsCardConfiguration())` explicitly AND `ApplyConfigurationsFromAssembly()` — results in duplicate application. EF Core handles it gracefully but it's redundant. Clean up when more entities are added by removing the explicit call and relying solely on `ApplyConfigurationsFromAssembly()`
+  - **Minor issue:** `AppDbContext` calls both `ApplyConfiguration(new SportsCardConfiguration())` explicitly AND `ApplyConfigurationsFromAssembly()` — results in duplicate application. EF Core handles it gracefully but it's redundant. Clean up when more entities are added
 
 ---
 
@@ -391,17 +391,16 @@ on app startup in development environment only.
   - All three grading companies represented: PSA, BGS, SGC — plus Raw
   - Raw cards correctly have `Grade = null` — consistent with the nullable decision from Prompt 1.2
   - Prices range from $45 to $495 — within the $5-$500 spec
-  - Card details (brands, card numbers, descriptions) are accurate to real cards
-  - Program.cs updated correctly: DbContext registered via DI, development-only seeding block, exception handling with logger, proper scoped service resolution
-  - **Important flag for Phase 2:** Program.cs uses `EnsureCreatedAsync()` which creates the DB directly from the model and bypasses EF migrations entirely. Must be swapped to `context.Database.MigrateAsync()` before connecting to Azure SQL in Phase 2
+  - Program.cs updated correctly: DbContext registered via DI, development-only seeding block, exception handling with logger
+  - EnsureCreatedAsync() flag resolved in Phase 2 via Prompt 2.4
 
 ---
 
 ## Phase 2 — Azure Infrastructure Setup
 
-### Prompt 2.1 — Azure Resource Group & SQL
+### Prompt 2.1 — Azure Resource Group & Core Services
 - **Tool:** Azure MCP Server (Copilot Agent Mode)
-- **Date:**
+- **Date:** April 2026
 - **Prompt:**
 ```
 Using my Azure subscription, create a Resource Group called 
@@ -410,8 +409,100 @@ called 'sportscard-sql-server' with a Basic tier database called
 'SportscardDb'. Create an App Service Plan (Basic B1) and a Web App 
 called 'sportscard-api'. Return the connection strings I need.
 ```
-- **Output Rating:** ⬜ Pending
+- **Output Rating:** ✅ Great
 - **Notes / What Was Changed:**
+  - Resource Group created in East US ✅
+  - SQL Server fell back to Central US due to East US capacity — not an issue for a portfolio project
+  - Azure SQL Database `SportscardDb` created at Basic tier (5 DTU, ~$5/month) ✅
+  - App Service Plan `sportscard-app-service-plan` at Basic B1 (~$13/month) ✅
+  - Web App `sportscard-api` created at https://sportscard-api.azurewebsites.net ✅
+  - TLS and firewall configured ✅
+  - **Security issue triggered:** Copilot wrote the full connection string including admin password directly into `appsettings.json` and `AZURE_DEPLOYMENT_SUMMARY.md` — both committed to the public repo. Required immediate remediation (see Phase 2 Security Fix below)
+
+---
+
+### Phase 2 Security Remediation — Credentials Exposed in Public Repo
+- **Date:** April 2026
+- **What Happened:**
+  - `appsettings.json` was committed to the public repo containing the full Azure SQL connection string including plain-text admin password
+  - `AZURE_DEPLOYMENT_SUMMARY.md` also contained the full connection string and password in plain text
+  - `azure-credentials.json` was created locally but not yet pushed — needed to ensure it stayed that way
+- **Actions Taken:**
+  - Azure SQL Server admin password rotated immediately in Azure Portal
+  - `appsettings.json` sanitized — connection string replaced with placeholder
+  - `AZURE_DEPLOYMENT_SUMMARY.md` sanitized — credentials replaced with secure storage guidance
+  - `.gitignore` updated with a new `Credential and Secret Files` section covering `azure-credentials.json` and broad credential naming patterns
+  - Both fixes committed directly by Claude via GitHub MCP
+
+---
+
+### Prompt 2.3 — Set Up User Secrets for Local Development
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Prompt:**
+```
+Set up .NET user secrets for the SportsCardStore.API project to 
+store the Azure SQL connection string securely for local development.
+
+1. Run the following command to initialize user secrets:
+   dotnet user-secrets init --project src/SportsCardStore.API
+
+2. Run the following command to store the connection string 
+   (I will fill in the actual value manually after):
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" 
+   "PLACEHOLDER" --project src/SportsCardStore.API
+
+3. Update Program.cs to ensure the connection string falls back 
+   correctly — it should read from user secrets in Development 
+   and from Azure App Service Configuration in Production. 
+   No connection string should ever be hardcoded in appsettings.json.
+
+4. Show me exactly where to find the user secrets file on my 
+   local machine so I can manually update the placeholder with 
+   the real connection string.
+```
+- **Output Rating:** ✅ Great
+- **Notes / What Was Changed:**
+  - User secrets initialized for SportsCardStore.API project
+  - Connection string stored in local user secrets file (never committed to repo)
+  - Program.cs reads from user secrets in Development, Azure App Service Configuration in Production
+  - User secrets file location on Windows: `%APPDATA%\Microsoft\UserSecrets\<guid>\secrets.json`
+
+---
+
+### Prompt 2.4 — Swap EnsureCreatedAsync for MigrateAsync and Create First Migration
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Prompt:**
+```
+In SportsCardStore.API Program.cs, replace EnsureCreatedAsync() 
+with MigrateAsync() so that EF Core migrations are applied 
+correctly instead of bypassing the migration system.
+
+Then create the first EF Core migration called "InitialCreate":
+
+dotnet ef migrations add InitialCreate \
+  --project src/SportsCardStore.Infrastructure \
+  --startup-project src/SportsCardStore.API
+
+Then apply the migration to the Azure SQL database:
+
+dotnet ef database update \
+  --project src/SportsCardStore.Infrastructure \
+  --startup-project src/SportsCardStore.API
+
+Show me the generated migration files and confirm what tables 
+and indexes will be created in the database.
+```
+- **Output Rating:** ✅ Great
+- **Notes / What Was Changed:**
+  - `Program.cs` updated — `EnsureCreatedAsync()` replaced with `MigrateAsync()` ✅
+  - Migration `20260404180525_InitialCreate` generated with correct timestamp ✅
+  - All three migration files created: `InitialCreate.cs`, `InitialCreate.Designer.cs`, `AppDbContextModelSnapshot.cs` ✅
+  - Migration creates `SportsCards` table with all correct column types, decimal precision, and datetime2 defaults ✅
+  - All 6 indexes included in migration — PlayerName, Year, PlayerName+Year, Sport, IsAvailable, CreatedDate ✅
+  - Clean `Down()` method drops the table on rollback ✅
+  - Migration applied to Azure SQL — `SportscardDb` table is live ✅
 
 ---
 
@@ -546,7 +637,11 @@ deserialization. Include error handling and logging via ILogger.
 | 7 | Always verify PK type consistency — Prompt 1.2 used int Id but project plan specifies Guid. Catch these early before they cascade through multiple files | Phase 1 |
 | 8 | Copilot added timestamp auto-update logic in SaveChanges/SaveChangesAsync unprompted — when the entity has date fields, it infers the pattern and implements it correctly | Phase 1 |
 | 9 | Copilot went well beyond the prompt scope on indexes (6 vs 2 requested) — review all generated indexes before accepting, extra indexes have storage and write performance costs | Phase 1 |
-| 10 | EnsureCreatedAsync() bypasses EF migrations — fine for development but must be swapped to MigrateAsync() before connecting to Azure SQL in production | Phase 1 |
+| 10 | EnsureCreatedAsync() bypasses EF migrations — always use MigrateAsync() when connecting to a real database | Phase 1/2 |
+| 11 | **Critical:** AI-assisted Azure setup will write credentials directly into config files and commit them to source control — always review ANY file that touches connection strings before merging. Never let a credential touch a public repo | Phase 2 |
+| 12 | When credentials are exposed in a public repo, the password must be rotated immediately even if the repo is "just a portfolio project" — bots scan GitHub continuously for exposed credentials | Phase 2 |
+| 13 | Use `dotnet user-secrets` for local dev connection strings and Azure App Service Configuration for production — nothing sensitive ever belongs in appsettings.json in a public repo | Phase 2 |
+| 14 | Add project-specific credential file patterns to .gitignore proactively before creating those files — don't wait until after the file exists | Phase 2 |
 
 ---
 
@@ -560,6 +655,7 @@ deserialization. Include error handling and logging via ILogger.
 - Entity model prompts that specify field types, validation rules, and target project produce complete, production-quality output in one shot
 - DbContext prompts that specify Fluent API and a separate configuration class produce well-structured, maintainable EF configuration
 - Seed data prompts that specify real player names and grading company mix produce accurate, domain-appropriate test data
+- Migration prompts that include both the `add` and `update` commands in sequence produce a complete, runnable migration workflow
 
 ---
 
@@ -569,6 +665,7 @@ deserialization. Include error handling and logging via ILogger.
 
 - Broad single prompts that touch multiple sections can miss consistency issues across the document — follow up with a review pass after any structural change
 - Vague delete prompts ("remove the WeatherForecast files") don't reliably produce file deletions — always name files explicitly with their full path
+- Azure infrastructure prompts will write connection strings into config files without being asked — always review appsettings.json immediately after any Azure setup prompt before committing
 
 ---
 
