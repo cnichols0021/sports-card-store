@@ -12,7 +12,8 @@ public class Program
 {
     private static ILogger<Program>? _logger;
     private static readonly HttpClient _httpClient = new();
-    
+    private const string DefaultCondition = "Near Mint or Better";
+
     public static async Task<int> Main(string[] args)
     {
         // Configure services
@@ -256,9 +257,12 @@ public class Program
             var isAutograph = ParseBoolean(GetCellValue(row, columnMapping, "Autograph"));
             var isRelic = ParseBoolean(GetCellValue(row, columnMapping, "Relic"));
             var isBowmanFirst = ParseBoolean(GetCellValue(row, columnMapping, "Bowman First"));
-            
-            // Optional fields
+
+            // Optional fields — Condition defaults to "Near Mint or Better" if blank
             var condition = GetCellValue(row, columnMapping, "Condition")?.Trim();
+            if (string.IsNullOrEmpty(condition))
+                condition = DefaultCondition;
+
             var description = GetCellValue(row, columnMapping, "Description")?.Trim();
             var imageUrl = GetCellValue(row, columnMapping, "Image Url")?.Trim();
             
