@@ -45,6 +45,12 @@ namespace SportsCardStore.Shared.Models
         [Required]
         public bool IsBowmanFirst { get; set; } = false;
 
+        [MaxLength(100)]
+        public string? ParallelName { get; set; }
+
+        [Range(1, 10000)]
+        public int? PrintRun { get; set; }
+
         [Range(0.1, 10.0)]
         public decimal? Grade { get; set; }
 
@@ -113,6 +119,12 @@ namespace SportsCardStore.Shared.Models
         [Required]
         public bool IsBowmanFirst { get; set; } = false;
 
+        [MaxLength(100)]
+        public string? ParallelName { get; set; }
+
+        [Range(1, 10000)]
+        public int? PrintRun { get; set; }
+
         [Range(0.1, 10.0)]
         public decimal? Grade { get; set; }
 
@@ -154,6 +166,8 @@ namespace SportsCardStore.Shared.Models
         public bool IsAutograph { get; set; }
         public bool IsRelic { get; set; }
         public bool IsBowmanFirst { get; set; }
+        public string? ParallelName { get; set; }
+        public int? PrintRun { get; set; }
         public decimal? Grade { get; set; }
         public GradingCompany GradingCompany { get; set; }
         public string? Condition { get; set; }
@@ -162,7 +176,7 @@ namespace SportsCardStore.Shared.Models
         public string? ImageUrl { get; set; }
         public string? Description { get; set; }
         public bool IsAvailable { get; set; }
-        public DateTime CreatedDate { get; set; }    
+        public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
     }
 

@@ -32,6 +32,8 @@ namespace SportsCardStore.Infrastructure.Services
             decimal? maxPrice = null,
             bool? isAvailable = null,
             bool? isBowmanFirst = null,
+            string? parallelName = null,
+            int? maxPrintRun = null,
             int page = 1,
             int pageSize = 10)
         {
@@ -44,53 +46,39 @@ namespace SportsCardStore.Infrastructure.Services
                 var query = _context.SportsCards.AsQueryable();
 
                 if (sport.HasValue)
-                {
                     query = query.Where(c => c.Sport == sport.Value);
-                }
 
                 if (!string.IsNullOrWhiteSpace(brand))
-                {
                     query = query.Where(c => c.Brand.ToLower().Contains(brand.ToLower()));
-                }
 
                 if (!string.IsNullOrWhiteSpace(playerName))
-                {
                     query = query.Where(c => c.PlayerName.ToLower().Contains(playerName.ToLower()));
-                }
 
                 if (!string.IsNullOrWhiteSpace(team))
-                {
                     query = query.Where(c => c.Team.ToLower().Contains(team.ToLower()));
-                }
 
                 if (year.HasValue)
-                {
                     query = query.Where(c => c.Year == year.Value);
-                }
 
                 if (minPrice.HasValue)
-                {
                     query = query.Where(c => c.Price >= minPrice.Value);
-                }
 
                 if (maxPrice.HasValue)
-                {
                     query = query.Where(c => c.Price <= maxPrice.Value);
-                }
 
                 if (isAvailable.HasValue)
-                {
                     query = query.Where(c => c.IsAvailable == isAvailable.Value);
-                }
                 else
-                {
                     query = query.Where(c => c.IsAvailable);
-                }
 
                 if (isBowmanFirst.HasValue)
-                {
                     query = query.Where(c => c.IsBowmanFirst == isBowmanFirst.Value);
-                }
+
+                if (!string.IsNullOrWhiteSpace(parallelName))
+                    query = query.Where(c => c.ParallelName != null && c.ParallelName.ToLower().Contains(parallelName.ToLower()));
+
+                if (maxPrintRun.HasValue)
+                    query = query.Where(c => c.PrintRun != null && c.PrintRun <= maxPrintRun.Value);
 
                 var totalCount = await query.CountAsync();
 
@@ -154,9 +142,7 @@ namespace SportsCardStore.Infrastructure.Services
             {
                 var existingCard = await _context.SportsCards.FindAsync(id);
                 if (existingCard == null)
-                {
                     return null;
-                }
 
                 _context.Entry(existingCard).CurrentValues.SetValues(sportsCard);
                 await _context.SaveChangesAsync();
@@ -175,9 +161,7 @@ namespace SportsCardStore.Infrastructure.Services
             {
                 var card = await _context.SportsCards.FindAsync(id);
                 if (card == null)
-                {
                     return false;
-                }
 
                 _context.SportsCards.Remove(card);
                 await _context.SaveChangesAsync();

@@ -18,6 +18,8 @@ namespace SportsCardStore.Core.Interfaces
             decimal? maxPrice = null,
             bool? isAvailable = null,
             bool? isBowmanFirst = null,
+            string? parallelName = null,
+            int? maxPrintRun = null,
             int page = 1,
             int pageSize = 10);
 

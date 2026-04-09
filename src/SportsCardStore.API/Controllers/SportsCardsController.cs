@@ -35,13 +35,16 @@ namespace SportsCardStore.API.Controllers
             [FromQuery] decimal? maxPrice = null,
             [FromQuery] bool? isAvailable = null,
             [FromQuery] bool? isBowmanFirst = null,
+            [FromQuery] string? parallelName = null,
+            [FromQuery] int? maxPrintRun = null,
             [FromQuery][Range(1, int.MaxValue)] int page = 1,
             [FromQuery][Range(1, 100)] int pageSize = 10)
         {
             try
             {
                 var result = await _sportsCardService.GetAllAsync(
-                    sport, brand, playerName, team, year, minPrice, maxPrice, isAvailable, isBowmanFirst, page, pageSize);
+                    sport, brand, playerName, team, year, minPrice, maxPrice,
+                    isAvailable, isBowmanFirst, parallelName, maxPrintRun, page, pageSize);
 
                 var response = new PagedSportsCardResponse
                 {
@@ -75,9 +78,7 @@ namespace SportsCardStore.API.Controllers
             {
                 var card = await _sportsCardService.GetByIdAsync(id);
                 if (card == null)
-                {
                     return NotFound($"Sports card with ID {id} not found");
-                }
 
                 return Ok(MapToResponse(card));
             }
@@ -99,9 +100,7 @@ namespace SportsCardStore.API.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                {
                     return BadRequest(ModelState);
-                }
 
                 var sportsCard = new SportsCard
                 {
@@ -116,6 +115,8 @@ namespace SportsCardStore.API.Controllers
                     IsAutograph = request.IsAutograph,
                     IsRelic = request.IsRelic,
                     IsBowmanFirst = request.IsBowmanFirst,
+                    ParallelName = request.ParallelName,
+                    PrintRun = request.PrintRun,
                     Grade = request.Grade,
                     GradingCompany = request.GradingCompany,
                     Condition = request.Condition,
@@ -129,7 +130,6 @@ namespace SportsCardStore.API.Controllers
                 };
 
                 var createdCard = await _sportsCardService.CreateAsync(sportsCard);
-
                 return CreatedAtAction(nameof(GetCard), new { id = createdCard.Id }, MapToResponse(createdCard));
             }
             catch (Exception ex)
@@ -151,15 +151,11 @@ namespace SportsCardStore.API.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                {
                     return BadRequest(ModelState);
-                }
 
                 var existingCard = await _sportsCardService.GetByIdAsync(id);
                 if (existingCard == null)
-                {
                     return NotFound($"Sports card with ID {id} not found");
-                }
 
                 existingCard.PlayerName = request.PlayerName;
                 existingCard.Year = request.Year;
@@ -172,6 +168,8 @@ namespace SportsCardStore.API.Controllers
                 existingCard.IsAutograph = request.IsAutograph;
                 existingCard.IsRelic = request.IsRelic;
                 existingCard.IsBowmanFirst = request.IsBowmanFirst;
+                existingCard.ParallelName = request.ParallelName;
+                existingCard.PrintRun = request.PrintRun;
                 existingCard.Grade = request.Grade;
                 existingCard.GradingCompany = request.GradingCompany;
                 existingCard.Condition = request.Condition;
@@ -184,9 +182,7 @@ namespace SportsCardStore.API.Controllers
 
                 var updatedCard = await _sportsCardService.UpdateAsync(id, existingCard);
                 if (updatedCard == null)
-                {
                     return StatusCode(500, "An error occurred while updating the sports card");
-                }
 
                 return Ok(MapToResponse(updatedCard));
             }
@@ -209,9 +205,7 @@ namespace SportsCardStore.API.Controllers
             {
                 var existingCard = await _sportsCardService.GetByIdAsync(id);
                 if (existingCard == null)
-                {
                     return NotFound($"Sports card with ID {id} not found");
-                }
 
                 await _sportsCardService.DeleteAsync(id);
                 return NoContent();
@@ -242,6 +236,8 @@ namespace SportsCardStore.API.Controllers
             IsAutograph = card.IsAutograph,
             IsRelic = card.IsRelic,
             IsBowmanFirst = card.IsBowmanFirst,
+            ParallelName = card.ParallelName,
+            PrintRun = card.PrintRun,
             Grade = card.Grade,
             GradingCompany = card.GradingCompany,
             Condition = card.Condition,

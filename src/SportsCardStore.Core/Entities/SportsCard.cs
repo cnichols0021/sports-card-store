@@ -82,11 +82,25 @@ public class SportsCard
     public bool IsRelic { get; set; }
 
     /// <summary>
-    /// Indicates if this is the first Bowman card of a prospect
-    /// First Bowman cards command significant price premiums due to their collectible value
+    /// Indicates if this is the first Bowman card of a prospect.
+    /// First Bowman cards command significant price premiums due to their collectible value.
     /// </summary>
     [Required]
     public bool IsBowmanFirst { get; set; } = false;
+
+    /// <summary>
+    /// The name of the parallel version of this card (e.g., "Blue Refractor", "Gold", "Superfractor").
+    /// Null means this is the base version.
+    /// </summary>
+    [MaxLength(100)]
+    public string? ParallelName { get; set; }
+
+    /// <summary>
+    /// The total print run for this parallel (e.g., 25 for a /25, 1 for a 1/1).
+    /// Null means the card is non-numbered.
+    /// </summary>
+    [Range(1, 10000)]
+    public int? PrintRun { get; set; }
 
     /// <summary>
     /// Grade assigned by the grading company (0-10 scale, with decimals)

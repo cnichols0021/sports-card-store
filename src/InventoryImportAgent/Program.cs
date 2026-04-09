@@ -258,6 +258,15 @@ public class Program
             var isRelic = ParseBoolean(GetCellValue(row, columnMapping, "Relic"));
             var isBowmanFirst = ParseBoolean(GetCellValue(row, columnMapping, "Bowman First"));
 
+            // Parallel fields (both optional — null means base card / non-numbered)
+            var parallelName = GetCellValue(row, columnMapping, "Parallel")?.Trim();
+            if (string.IsNullOrEmpty(parallelName)) parallelName = null;
+
+            int? printRun = null;
+            var printRunText = GetCellValue(row, columnMapping, "Print Run")?.Trim();
+            if (!string.IsNullOrEmpty(printRunText) && int.TryParse(printRunText, out int printRunValue) && printRunValue >= 1)
+                printRun = printRunValue;
+
             // Optional fields — Condition defaults to "Near Mint or Better" if blank
             var condition = GetCellValue(row, columnMapping, "Condition")?.Trim();
             if (string.IsNullOrEmpty(condition))
@@ -283,6 +292,8 @@ public class Program
                 IsAutograph = isAutograph,
                 IsRelic = isRelic,
                 IsBowmanFirst = isBowmanFirst,
+                ParallelName = parallelName,
+                PrintRun = printRun,
                 Grade = grade,
                 GradingCompany = gradingCompany,
                 Condition = condition,
