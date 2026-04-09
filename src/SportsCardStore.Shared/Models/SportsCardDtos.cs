@@ -42,6 +42,9 @@ namespace SportsCardStore.Shared.Models
         [Required]
         public bool IsRelic { get; set; }
 
+        [Required]
+        public bool IsBowmanFirst { get; set; } = false;
+
         [Range(0.1, 10.0)]
         public decimal? Grade { get; set; }
 
@@ -107,6 +110,9 @@ namespace SportsCardStore.Shared.Models
         [Required]
         public bool IsRelic { get; set; }
 
+        [Required]
+        public bool IsBowmanFirst { get; set; } = false;
+
         [Range(0.1, 10.0)]
         public decimal? Grade { get; set; }
 
@@ -147,6 +153,7 @@ namespace SportsCardStore.Shared.Models
         public bool IsRookie { get; set; }
         public bool IsAutograph { get; set; }
         public bool IsRelic { get; set; }
+        public bool IsBowmanFirst { get; set; }
         public decimal? Grade { get; set; }
         public GradingCompany GradingCompany { get; set; }
         public string? Condition { get; set; }

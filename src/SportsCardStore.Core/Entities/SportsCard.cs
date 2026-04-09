@@ -82,6 +82,13 @@ public class SportsCard
     public bool IsRelic { get; set; }
 
     /// <summary>
+    /// Indicates if this is the first Bowman card of a prospect
+    /// First Bowman cards command significant price premiums due to their collectible value
+    /// </summary>
+    [Required]
+    public bool IsBowmanFirst { get; set; } = false;
+
+    /// <summary>
     /// Grade assigned by the grading company (0-10 scale, with decimals)
     /// </summary>
     [Range(0.0, 10.0, ErrorMessage = "Grade must be between 0.0 and 10.0")]
