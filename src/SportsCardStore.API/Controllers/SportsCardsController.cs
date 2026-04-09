@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SportsCardStore.API.Models;
+using SportsCardStore.Shared.Models;
 using SportsCardStore.Core.Entities;
 using SportsCardStore.Core.Enums;
 using SportsCardStore.Core.Interfaces;
@@ -34,13 +34,14 @@ namespace SportsCardStore.API.Controllers
             [FromQuery] decimal? minPrice = null,
             [FromQuery] decimal? maxPrice = null,
             [FromQuery] bool? isAvailable = null,
+            [FromQuery] bool? isBowmanFirst = null,
             [FromQuery][Range(1, int.MaxValue)] int page = 1,
             [FromQuery][Range(1, 100)] int pageSize = 10)
         {
             try
             {
                 var result = await _sportsCardService.GetAllAsync(
-                    sport, brand, playerName, team, year, minPrice, maxPrice, isAvailable, page, pageSize);
+                    sport, brand, playerName, team, year, minPrice, maxPrice, isAvailable, isBowmanFirst, page, pageSize);
 
                 var response = new PagedSportsCardResponse
                 {
@@ -50,9 +51,14 @@ namespace SportsCardStore.API.Controllers
                         PlayerName = card.PlayerName,
                         Year = card.Year,
                         Brand = card.Brand,
+                        SetName = card.SetName,
                         CardNumber = card.CardNumber,
                         Sport = card.Sport,
                         Team = card.Team,
+                        IsRookie = card.IsRookie,
+                        IsAutograph = card.IsAutograph,
+                        IsRelic = card.IsRelic,
+                        IsBowmanFirst = card.IsBowmanFirst,
                         Grade = card.Grade,
                         GradingCompany = card.GradingCompany,
                         Condition = card.Condition,
@@ -103,9 +109,14 @@ namespace SportsCardStore.API.Controllers
                     PlayerName = card.PlayerName,
                     Year = card.Year,
                     Brand = card.Brand,
+                    SetName = card.SetName,
                     CardNumber = card.CardNumber,
                     Sport = card.Sport,
                     Team = card.Team,
+                    IsRookie = card.IsRookie,
+                    IsAutograph = card.IsAutograph,
+                    IsRelic = card.IsRelic,
+                    IsBowmanFirst = card.IsBowmanFirst,
                     Grade = card.Grade,
                     GradingCompany = card.GradingCompany,
                     Condition = card.Condition,

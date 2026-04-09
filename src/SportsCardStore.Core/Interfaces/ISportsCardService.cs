@@ -17,6 +17,7 @@ namespace SportsCardStore.Core.Interfaces
             decimal? minPrice = null,
             decimal? maxPrice = null,
             bool? isAvailable = null,
+            bool? isBowmanFirst = null,
             int page = 1,
             int pageSize = 10);
 

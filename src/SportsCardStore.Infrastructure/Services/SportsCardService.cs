@@ -31,6 +31,7 @@ namespace SportsCardStore.Infrastructure.Services
             decimal? minPrice = null,
             decimal? maxPrice = null,
             bool? isAvailable = null,
+            bool? isBowmanFirst = null,
             int page = 1,
             int pageSize = 10)
         {
@@ -84,6 +85,11 @@ namespace SportsCardStore.Infrastructure.Services
                 else
                 {
                     query = query.Where(c => c.IsAvailable);
+                }
+
+                if (isBowmanFirst.HasValue)
+                {
+                    query = query.Where(c => c.IsBowmanFirst == isBowmanFirst.Value);
                 }
 
                 var totalCount = await query.CountAsync();
