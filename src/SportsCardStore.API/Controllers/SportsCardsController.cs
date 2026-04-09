@@ -45,31 +45,7 @@ namespace SportsCardStore.API.Controllers
 
                 var response = new PagedSportsCardResponse
                 {
-                    Items = result.Items.Select(card => new SportsCardResponse
-                    {
-                        Id = card.Id,
-                        PlayerName = card.PlayerName,
-                        Year = card.Year,
-                        Brand = card.Brand,
-                        SetName = card.SetName,
-                        CardNumber = card.CardNumber,
-                        Sport = card.Sport,
-                        Team = card.Team,
-                        IsRookie = card.IsRookie,
-                        IsAutograph = card.IsAutograph,
-                        IsRelic = card.IsRelic,
-                        IsBowmanFirst = card.IsBowmanFirst,
-                        Grade = card.Grade,
-                        GradingCompany = card.GradingCompany,
-                        Condition = card.Condition,
-                        Price = card.Price,
-                        Quantity = card.Quantity,
-                        ImageUrl = card.ImageUrl,
-                        Description = card.Description,
-                        IsAvailable = card.IsAvailable,
-                        CreatedDate = card.CreatedDate,
-                        UpdatedDate = card.UpdatedDate
-                    }),
+                    Items = result.Items.Select(card => MapToResponse(card)),
                     TotalCount = result.TotalCount,
                     Page = result.Page,
                     PageSize = result.PageSize,
@@ -103,33 +79,7 @@ namespace SportsCardStore.API.Controllers
                     return NotFound($"Sports card with ID {id} not found");
                 }
 
-                var response = new SportsCardResponse
-                {
-                    Id = card.Id,
-                    PlayerName = card.PlayerName,
-                    Year = card.Year,
-                    Brand = card.Brand,
-                    SetName = card.SetName,
-                    CardNumber = card.CardNumber,
-                    Sport = card.Sport,
-                    Team = card.Team,
-                    IsRookie = card.IsRookie,
-                    IsAutograph = card.IsAutograph,
-                    IsRelic = card.IsRelic,
-                    IsBowmanFirst = card.IsBowmanFirst,
-                    Grade = card.Grade,
-                    GradingCompany = card.GradingCompany,
-                    Condition = card.Condition,
-                    Price = card.Price,
-                    Quantity = card.Quantity,
-                    ImageUrl = card.ImageUrl,
-                    Description = card.Description,
-                    IsAvailable = card.IsAvailable,
-                    CreatedDate = card.CreatedDate,
-                    UpdatedDate = card.UpdatedDate
-                };
-
-                return Ok(response);
+                return Ok(MapToResponse(card));
             }
             catch (Exception ex)
             {
@@ -180,28 +130,7 @@ namespace SportsCardStore.API.Controllers
 
                 var createdCard = await _sportsCardService.CreateAsync(sportsCard);
 
-                var response = new SportsCardResponse
-                {
-                    Id = createdCard.Id,
-                    PlayerName = createdCard.PlayerName,
-                    Year = createdCard.Year,
-                    Brand = createdCard.Brand,
-                    CardNumber = createdCard.CardNumber,
-                    Sport = createdCard.Sport,
-                    Team = createdCard.Team,
-                    Grade = createdCard.Grade,
-                    GradingCompany = createdCard.GradingCompany,
-                    Condition = createdCard.Condition,
-                    Price = createdCard.Price,
-                    Quantity = createdCard.Quantity,
-                    ImageUrl = createdCard.ImageUrl,
-                    Description = createdCard.Description,
-                    IsAvailable = createdCard.IsAvailable,
-                    CreatedDate = createdCard.CreatedDate,
-                    UpdatedDate = createdCard.UpdatedDate
-                };
-
-                return CreatedAtAction(nameof(GetCard), new { id = createdCard.Id }, response);
+                return CreatedAtAction(nameof(GetCard), new { id = createdCard.Id }, MapToResponse(createdCard));
             }
             catch (Exception ex)
             {
@@ -259,28 +188,7 @@ namespace SportsCardStore.API.Controllers
                     return StatusCode(500, "An error occurred while updating the sports card");
                 }
 
-                var response = new SportsCardResponse
-                {
-                    Id = updatedCard.Id,
-                    PlayerName = updatedCard.PlayerName,
-                    Year = updatedCard.Year,
-                    Brand = updatedCard.Brand,
-                    CardNumber = updatedCard.CardNumber,
-                    Sport = updatedCard.Sport,
-                    Team = updatedCard.Team,
-                    Grade = updatedCard.Grade,
-                    GradingCompany = updatedCard.GradingCompany,
-                    Condition = updatedCard.Condition,
-                    Price = updatedCard.Price,
-                    Quantity = updatedCard.Quantity,
-                    ImageUrl = updatedCard.ImageUrl,
-                    Description = updatedCard.Description,
-                    IsAvailable = updatedCard.IsAvailable,
-                    CreatedDate = updatedCard.CreatedDate,
-                    UpdatedDate = updatedCard.UpdatedDate
-                };
-
-                return Ok(response);
+                return Ok(MapToResponse(updatedCard));
             }
             catch (Exception ex)
             {
@@ -314,5 +222,36 @@ namespace SportsCardStore.API.Controllers
                 return StatusCode(500, "An error occurred while deleting the sports card");
             }
         }
+
+        /// <summary>
+        /// Maps a SportsCard entity to a SportsCardResponse DTO.
+        /// Single mapping method ensures all fields are consistently returned
+        /// across all endpoints — GET, POST, and PUT.
+        /// </summary>
+        private static SportsCardResponse MapToResponse(SportsCard card) => new()
+        {
+            Id = card.Id,
+            PlayerName = card.PlayerName,
+            Year = card.Year,
+            Brand = card.Brand,
+            SetName = card.SetName,
+            CardNumber = card.CardNumber,
+            Sport = card.Sport,
+            Team = card.Team,
+            IsRookie = card.IsRookie,
+            IsAutograph = card.IsAutograph,
+            IsRelic = card.IsRelic,
+            IsBowmanFirst = card.IsBowmanFirst,
+            Grade = card.Grade,
+            GradingCompany = card.GradingCompany,
+            Condition = card.Condition,
+            Price = card.Price,
+            Quantity = card.Quantity,
+            ImageUrl = card.ImageUrl,
+            Description = card.Description,
+            IsAvailable = card.IsAvailable,
+            CreatedDate = card.CreatedDate,
+            UpdatedDate = card.UpdatedDate
+        };
     }
 }
