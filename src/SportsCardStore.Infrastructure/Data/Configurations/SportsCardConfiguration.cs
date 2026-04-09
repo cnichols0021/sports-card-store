@@ -46,6 +46,26 @@ public class SportsCardConfiguration : IEntityTypeConfiguration<SportsCard>
             .HasMaxLength(50)
             .HasColumnType("nvarchar(50)");
 
+        builder.Property(sc => sc.SetName)
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasColumnType("nvarchar(100)");
+
+        builder.Property(sc => sc.IsRookie)
+            .IsRequired()
+            .HasColumnType("bit")
+            .HasDefaultValue(false);
+
+        builder.Property(sc => sc.IsAutograph)
+            .IsRequired()
+            .HasColumnType("bit")
+            .HasDefaultValue(false);
+
+        builder.Property(sc => sc.IsRelic)
+            .IsRequired()
+            .HasColumnType("bit")
+            .HasDefaultValue(false);
+
         builder.Property(sc => sc.Grade)
             .HasColumnType("decimal(3,1)")
             .IsRequired(false);
