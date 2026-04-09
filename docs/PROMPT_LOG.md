@@ -180,88 +180,47 @@
 ### Prompt 8.2 — Inventory Import Agent Scaffold
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
-- **Prompt:** *(based on docs/INVENTORY_IMPORT_SCHEMA.md Copilot Prompt Starting Point)*
 - **Output Rating:** ✅ Great
-- **Notes / What Was Changed:**
+- **Notes:**
   - Created `src/InventoryImportAgent/` as a standalone C# console app ✅
-  - ClosedXML used for Excel parsing ✅
-  - Dynamic column mapping via header row — not hardcoded column positions ✅
-  - All required fields validated before import — skips blank PlayerName, invalid year/price/quantity ✅
-  - Raw cards validated to have null Grade — enforcement in place ✅
-  - `ParseBoolean` handles true/false/yes/no/1/y — covers common Excel boolean formats ✅
-  - Posts to `POST /api/sportscards` via HttpClient — correctly decoupled from data layer ✅
-  - Imported / Skipped / Failed counts logged at completion ✅
-  - API URL and Excel file path accepted as command line args ✅
-  - Continues processing remaining rows if single row fails ✅
-  - **DTOs moved to Shared project** — Copilot recognized InventoryImportAgent needed CreateSportsCardRequest and correctly moved it from API/Models to SportsCardStore.Shared/Models — excellent architectural decision ✅
-  - Shared DTOs updated to include SetName, IsRookie, IsAutograph, IsRelic ✅
-  - **IsBowmanFirst not yet mapped in InventoryImportAgent** — requires follow-up prompt (see below)
-  - **CreateCard/UpdateCard in controller missing new fields** — SetName, IsRookie, IsAutograph, IsRelic, IsBowmanFirst not mapped from request to entity (requires follow-up prompt)
+  - ClosedXML for Excel parsing, dynamic column mapping via header row ✅
+  - All required fields validated, Raw cards enforced to have null Grade ✅
+  - ParseBoolean handles true/false/yes/no/1/y ✅
+  - Posts to `POST /api/sportscards` via HttpClient — decoupled from data layer ✅
+  - Imported / Skipped / Failed counts logged, API URL + file path as args ✅
+  - DTOs correctly moved to Shared project unprompted — strong architectural decision ✅
 
----
-
-### Prompt 8.2.1 — Add Entity Fields (SetName, IsRookie, IsAutograph, IsRelic) + Migration
+### Prompt 8.2.1 — Add Entity Fields + Migration
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Output Rating:** ✅ Great
-- **Notes:**
-  - SportsCard entity updated with SetName, IsRookie, IsAutograph, IsRelic ✅
-  - Migration `20260409113542_AddInventoryFields` created and applied ✅
-  - All four fields correctly added to Azure SQL database ✅
-
----
+- **Notes:** SetName, IsRookie, IsAutograph, IsRelic added to entity. Migration `20260409113542_AddInventoryFields` applied to Azure SQL ✅
 
 ### Prompt 8.2.2 — Add IsBowmanFirst Field
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
 - **Output Rating:** ✅ Great
 - **Notes:**
-  - `IsBowmanFirst` added to SportsCard entity with XML doc comment and `default false` ✅
-  - `IsBowmanFirst` added to CreateSportsCardRequest, UpdateSportsCardRequest, SportsCardResponse in Shared DTOs ✅
-  - `isBowmanFirst` filter param added to ISportsCardService.GetAllAsync ✅
-  - `isBowmanFirst` query param added to SportsCardsController.GetAllCards ✅
-  - `IsBowmanFirst` mapped in GET response entity → DTO conversions ✅
-  - Separate migration `20260409114438_AddIsBowmanFirstField` created and applied ✅
-  - **IsBowmanFirst still not mapped in InventoryImportAgent** — see pending prompt below
-  - **CreateCard/UpdateCard still not mapping new boolean fields** — see pending prompt below
+  - IsBowmanFirst added to entity, all Shared DTOs, ISportsCardService filter param, and controller GET query param ✅
+  - Separate migration `20260409114438_AddIsBowmanFirstField` applied ✅
 
----
+### Prompt 8.2.3 — Fix InventoryImportAgent IsBowmanFirst Mapping
+- **Tool:** Claude (direct GitHub push)
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - Copilot claimed the work was already done twice without making any changes — SHA was unchanged both times, confirming hallucination
+  - Claude pushed the fix directly: `isBowmanFirst = ParseBoolean(GetCellValue(row, columnMapping, "Bowman First"))` added to boolean fields section, `IsBowmanFirst = isBowmanFirst` added to CreateSportsCardRequest initializer ✅
+  - **Key lesson:** Always verify by SHA, not by Copilot's confirmation. If SHA hasn't changed, nothing happened.
 
-### Prompt 8.2.3 — Fix InventoryImportAgent IsBowmanFirst Mapping ⬜ Pending
-- **Tool:** GitHub Copilot Chat
-- **Prompt:**
-```
-In src/InventoryImportAgent/Program.cs, update the
-MapRowToSportsCard method to read the "Bowman First" column
-from Excel and map it to IsBowmanFirst on
-CreateSportsCardRequest. Default to false if the column
-is missing or blank. Add it alongside the other boolean
-fields (IsRookie, IsAutograph, IsRelic).
-```
-- **Output Rating:** ⬜ Pending
-
----
-
-### Prompt 8.2.4 — Fix Controller CreateCard/UpdateCard Missing Field Mappings ⬜ Pending
-- **Tool:** GitHub Copilot Chat
-- **Prompt:**
-```
-In SportsCardsController.cs, update the CreateCard and
-UpdateCard action methods to map all new fields from the
-request to the SportsCard entity:
-- SetName
-- IsRookie
-- IsAutograph
-- IsRelic
-- IsBowmanFirst
-
-These fields exist on both CreateSportsCardRequest /
-UpdateSportsCardRequest and on the SportsCard entity
-but are not currently being assigned in either action.
-```
-- **Output Rating:** ⬜ Pending
-
----
+### Prompt 8.2.4 — Fix Controller CreateCard/UpdateCard Missing Field Mappings
+- **Tool:** Claude (direct GitHub push)
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - Copilot correctly mapped SetName, IsRookie, IsAutograph, IsRelic, IsBowmanFirst in the entity initializer (CreateCard) and entity update block (UpdateCard) ✅
+  - **Additional fix pushed by Claude:** Response DTOs inside CreateCard and UpdateCard were still missing the new fields — the returned object after POST/PUT would have been incomplete. Claude refactored all three endpoints (GET, GET by id, POST, PUT) to use a single private `MapToResponse(SportsCard card)` helper method, ensuring all fields are returned consistently from every endpoint ✅
+  - This is the correct long-term pattern — a single mapping method means adding a field in the future only requires one change, not four
 
 ### Prompt 8.1 — Card Listing Agent (Scaffold)
 - **Tool:** GitHub Copilot Chat
@@ -276,7 +235,6 @@ deserialization. Include error handling and logging via ILogger.
 - **Output Rating:** ⬜ Pending
 
 ### Prompt 8.3 — Price Research Agent
-- **Tool:** *(to be determined)*
 - **Output Rating:** ⬜ Pending
 
 ---
@@ -284,7 +242,6 @@ deserialization. Include error handling and logging via ILogger.
 ## CI/CD Pipeline
 
 ### Prompt CI.1 — Azure Pipelines YAML Pipeline
-- **Tool:** GitHub Copilot Chat
 - **Output Rating:** ⬜ Pending
 
 ---
@@ -313,6 +270,8 @@ deserialization. Include error handling and logging via ILogger.
 | 18 | Copilot adds bonus tests beyond what was requested — it infers missing scenarios from existing controller code | Phase 3 |
 | 19 | When building a standalone agent that needs shared DTOs, Copilot correctly moves them to the Shared project — recognize and keep these unprompted architectural improvements | Phase 8 |
 | 20 | Adding a new field to the entity doesn't automatically cascade to controller action mappings — always verify CreateCard/UpdateCard manually map new request fields to entity fields | Phase 8 |
+| 21 | **Always verify by SHA, not by Copilot's confirmation** — if the file SHA hasn't changed after Copilot claims to have made a change, nothing happened. Always have Copilot push to GitHub before asking Claude to review | Phase 8 |
+| 22 | A single `MapToResponse()` helper method in the controller is the correct pattern — ensures all fields are returned consistently across every endpoint, and adding a new field in the future only requires one change | Phase 8 |
 
 ---
 
@@ -327,7 +286,8 @@ deserialization. Include error handling and logging via ILogger.
 - Both `add` and `update` migration commands in one prompt = complete runnable workflow
 - Explicit security instructions in Azure prompts = no credential exposure
 - Mocking at the interface level (ISportsCardService) = cleaner, faster, more maintainable tests
-- Documenting the Excel column schema in a dedicated file before prompting the import agent = precise, accurate output
+- Documenting the Excel column schema in a dedicated file before prompting the import agent = precise output
+- **Always have Copilot push/merge to GitHub before asking Claude to review — SHA is the ground truth**
 
 ---
 
@@ -339,6 +299,7 @@ deserialization. Include error handling and logging via ILogger.
 - Documentation generation prompts can produce files with bad security guidance — always review
 - Prompts that assume a repository pattern when the service uses DbContext directly — verify architecture first
 - Adding a boolean field to an entity in one prompt doesn't guarantee it gets mapped in all controller actions — always verify manually
+- **Asking Copilot to verify small changes it hasn't made yet — it will hallucinate completion. Use SHA to verify, not Copilot's word**
 
 ---
 
