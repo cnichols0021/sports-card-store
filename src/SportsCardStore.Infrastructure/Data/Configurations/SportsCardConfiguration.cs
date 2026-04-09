@@ -66,6 +66,11 @@ public class SportsCardConfiguration : IEntityTypeConfiguration<SportsCard>
             .HasColumnType("bit")
             .HasDefaultValue(false);
 
+        builder.Property(sc => sc.IsBowmanFirst)
+            .IsRequired()
+            .HasColumnType("bit")
+            .HasDefaultValue(false);
+
         builder.Property(sc => sc.Grade)
             .HasColumnType("decimal(3,1)")
             .IsRequired(false);
