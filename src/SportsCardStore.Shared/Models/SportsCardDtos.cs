@@ -2,7 +2,7 @@ using SportsCardStore.Core.Entities;
 using SportsCardStore.Core.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace SportsCardStore.API.Models
+namespace SportsCardStore.Shared.Models
 {
     public class CreateSportsCardRequest
     {
@@ -155,7 +155,7 @@ namespace SportsCardStore.API.Models
         public string? ImageUrl { get; set; }
         public string? Description { get; set; }
         public bool IsAvailable { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }    
         public DateTime UpdatedDate { get; set; }
     }
 
@@ -165,8 +165,5 @@ namespace SportsCardStore.API.Models
         public int TotalCount { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
-        public int TotalPages { get; set; }
-        public bool HasNextPage { get; set; }
-        public bool HasPreviousPage { get; set; }
     }
 }

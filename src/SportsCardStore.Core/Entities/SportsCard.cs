@@ -37,6 +37,13 @@ public class SportsCard
     public string Brand { get; set; } = string.Empty;
 
     /// <summary>
+    /// Set name (e.g., "Topps Chrome", "Bowman's Best", "Heritage")
+    /// </summary>
+    [Required]
+    [MaxLength(100)]
+    public string SetName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Card number within the set
     /// </summary>
     [Required]
@@ -55,6 +62,24 @@ public class SportsCard
     [Required]
     [MaxLength(50)]
     public string Team { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Indicates if this is a rookie card
+    /// </summary>
+    [Required]
+    public bool IsRookie { get; set; }
+
+    /// <summary>
+    /// Indicates if this card has an autograph
+    /// </summary>
+    [Required]
+    public bool IsAutograph { get; set; }
+
+    /// <summary>
+    /// Indicates if this card has a relic/memorabilia piece
+    /// </summary>
+    [Required]
+    public bool IsRelic { get; set; }
 
     /// <summary>
     /// Grade assigned by the grading company (0-10 scale, with decimals)
