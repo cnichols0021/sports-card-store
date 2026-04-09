@@ -124,18 +124,8 @@
 ### Prompt 3.1 — SportsCards Controller, Service, and DTOs
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
-- **Prompt:**
-```
-Create a SportsCardsController in ASP.NET Core 8 with these endpoints:
-GET /api/cards (all cards, with optional query params for sport,
-brand, grading company, min/max price), GET /api/cards/{id},
-POST /api/cards, PUT /api/cards/{id}, DELETE /api/cards/{id}.
-Use a service interface (ISportsCardService) and inject it.
-Return proper HTTP status codes. Include basic pagination support
-on the GET all endpoint.
-```
 - **Output Rating:** ✅ Great
-- **Notes / What Was Changed:**
+- **Notes:**
   - Full CRUD with 7 filter params and pagination ✅
   - ISportsCardService + PagedResult<T> in Core/Interfaces ✅
   - SportsCardService with smart IsAvailable default filter ✅
@@ -150,41 +140,14 @@ on the GET all endpoint.
 ### Prompt 3.2 — Unit Tests
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
-- **Prompt:**
-```
-Create xUnit unit tests for SportsCardsController in the
-SportsCardStore.UnitTests project. Mock ISportsCardService
-using Moq. Cover these scenarios:
-
-1. GetAllCards returns 200 OK with paged results when service returns data
-2. GetAllCards returns 200 OK with empty results when no cards exist
-3. GetCard returns 200 OK with card data when card exists
-4. GetCard returns 404 NotFound when card does not exist
-5. CreateCard returns 201 Created with location header when model is valid
-6. CreateCard returns 400 BadRequest when model state is invalid
-7. UpdateCard returns 200 OK when card exists and model is valid
-8. UpdateCard returns 404 NotFound when card does not exist
-9. DeleteCard returns 204 NoContent when card exists
-10. DeleteCard returns 404 NotFound when card does not exist
-
-Use FluentAssertions for assertions. Follow Arrange/Act/Assert pattern.
-Add XML doc comments explaining what each test validates.
-Add a reference to SportsCardStore.Infrastructure in the test project
-csproj if needed.
-```
 - **Output Rating:** ✅ Great
-- **Notes / What Was Changed:**
-  - **12 tests generated** — went beyond the 10 requested by adding exception handling test and UpdateCard validation test ✅
-  - `Controllers/` subfolder created in test project — correct organization ✅
-  - All four src projects referenced in csproj: Core, Infrastructure, API, Shared ✅ — API reference critical for DTO access
-  - Test naming convention: `MethodName_Condition_ExpectedResult` — professional standard ✅
-  - `It.IsAny<>()` matchers used correctly for all 10 service method parameters ✅
-  - `Verify()` calls on Delete tests confirm service was called exactly once or never ✅
-  - `SerializableError` type check on BadRequest responses ✅
-  - `CreatedAtActionResult.ActionName` and `RouteValues` checked on POST ✅
-  - Status codes AND response body values validated on every test ✅
-  - Real player names used in test data (Trout, Judge, Acuña, Ohtani, Betts) ✅
-  - **Note:** Original prompt said "mock the repository" but SportsCardService uses AppDbContext directly — prompt was correctly updated to mock ISportsCardService at controller level instead. This is the right testing approach.
+- **Notes:**
+  - 12 tests generated — 2 bonus tests beyond the 10 requested ✅
+  - Controllers/ subfolder, all four src projects referenced in csproj ✅
+  - Test naming: MethodName_Condition_ExpectedResult ✅
+  - Verify() calls confirm Delete service interactions ✅
+  - Status codes AND body values validated on every test ✅
+  - Note: Original prompt said "mock repository" — correctly updated to mock ISportsCardService at controller level
 
 ---
 
@@ -214,6 +177,92 @@ csproj if needed.
 
 ## Phase 8 — AI Agents
 
+### Prompt 8.2 — Inventory Import Agent Scaffold
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Prompt:** *(based on docs/INVENTORY_IMPORT_SCHEMA.md Copilot Prompt Starting Point)*
+- **Output Rating:** ✅ Great
+- **Notes / What Was Changed:**
+  - Created `src/InventoryImportAgent/` as a standalone C# console app ✅
+  - ClosedXML used for Excel parsing ✅
+  - Dynamic column mapping via header row — not hardcoded column positions ✅
+  - All required fields validated before import — skips blank PlayerName, invalid year/price/quantity ✅
+  - Raw cards validated to have null Grade — enforcement in place ✅
+  - `ParseBoolean` handles true/false/yes/no/1/y — covers common Excel boolean formats ✅
+  - Posts to `POST /api/sportscards` via HttpClient — correctly decoupled from data layer ✅
+  - Imported / Skipped / Failed counts logged at completion ✅
+  - API URL and Excel file path accepted as command line args ✅
+  - Continues processing remaining rows if single row fails ✅
+  - **DTOs moved to Shared project** — Copilot recognized InventoryImportAgent needed CreateSportsCardRequest and correctly moved it from API/Models to SportsCardStore.Shared/Models — excellent architectural decision ✅
+  - Shared DTOs updated to include SetName, IsRookie, IsAutograph, IsRelic ✅
+  - **IsBowmanFirst not yet mapped in InventoryImportAgent** — requires follow-up prompt (see below)
+  - **CreateCard/UpdateCard in controller missing new fields** — SetName, IsRookie, IsAutograph, IsRelic, IsBowmanFirst not mapped from request to entity (requires follow-up prompt)
+
+---
+
+### Prompt 8.2.1 — Add Entity Fields (SetName, IsRookie, IsAutograph, IsRelic) + Migration
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - SportsCard entity updated with SetName, IsRookie, IsAutograph, IsRelic ✅
+  - Migration `20260409113542_AddInventoryFields` created and applied ✅
+  - All four fields correctly added to Azure SQL database ✅
+
+---
+
+### Prompt 8.2.2 — Add IsBowmanFirst Field
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - `IsBowmanFirst` added to SportsCard entity with XML doc comment and `default false` ✅
+  - `IsBowmanFirst` added to CreateSportsCardRequest, UpdateSportsCardRequest, SportsCardResponse in Shared DTOs ✅
+  - `isBowmanFirst` filter param added to ISportsCardService.GetAllAsync ✅
+  - `isBowmanFirst` query param added to SportsCardsController.GetAllCards ✅
+  - `IsBowmanFirst` mapped in GET response entity → DTO conversions ✅
+  - Separate migration `20260409114438_AddIsBowmanFirstField` created and applied ✅
+  - **IsBowmanFirst still not mapped in InventoryImportAgent** — see pending prompt below
+  - **CreateCard/UpdateCard still not mapping new boolean fields** — see pending prompt below
+
+---
+
+### Prompt 8.2.3 — Fix InventoryImportAgent IsBowmanFirst Mapping ⬜ Pending
+- **Tool:** GitHub Copilot Chat
+- **Prompt:**
+```
+In src/InventoryImportAgent/Program.cs, update the
+MapRowToSportsCard method to read the "Bowman First" column
+from Excel and map it to IsBowmanFirst on
+CreateSportsCardRequest. Default to false if the column
+is missing or blank. Add it alongside the other boolean
+fields (IsRookie, IsAutograph, IsRelic).
+```
+- **Output Rating:** ⬜ Pending
+
+---
+
+### Prompt 8.2.4 — Fix Controller CreateCard/UpdateCard Missing Field Mappings ⬜ Pending
+- **Tool:** GitHub Copilot Chat
+- **Prompt:**
+```
+In SportsCardsController.cs, update the CreateCard and
+UpdateCard action methods to map all new fields from the
+request to the SportsCard entity:
+- SetName
+- IsRookie
+- IsAutograph
+- IsRelic
+- IsBowmanFirst
+
+These fields exist on both CreateSportsCardRequest /
+UpdateSportsCardRequest and on the SportsCard entity
+but are not currently being assigned in either action.
+```
+- **Output Rating:** ⬜ Pending
+
+---
+
 ### Prompt 8.1 — Card Listing Agent (Scaffold)
 - **Tool:** GitHub Copilot Chat
 - **Prompt:**
@@ -224,10 +273,6 @@ and returns a structured CardListing object with Title, Description,
 SuggestedPrice, Tags, and Category. Use System.Text.Json for
 deserialization. Include error handling and logging via ILogger.
 ```
-- **Output Rating:** ⬜ Pending
-
-### Prompt 8.2 — Inventory Import Agent
-- **Tool:** *(to be determined)*
 - **Output Rating:** ⬜ Pending
 
 ### Prompt 8.3 — Price Research Agent
@@ -264,8 +309,10 @@ deserialization. Include error handling and logging via ILogger.
 | 14 | Add credential file patterns to .gitignore before creating those files | Phase 2 |
 | 15 | Explicit security instructions in Azure prompts were respected — lesson carried forward successfully | Phase 2 |
 | 16 | Documentation files can also contain bad security guidance — review all generated docs, not just code | Phase 3 |
-| 17 | When service uses AppDbContext directly (no repository pattern), mock the interface one level up (ISportsCardService) rather than trying to mock the DB context — produces cleaner, faster unit tests | Phase 3 |
-| 18 | Copilot added 2 bonus tests beyond what was requested (exception handling + validation) — it correctly infers missing test scenarios from the existing controller code | Phase 3 |
+| 17 | Mock at the interface level (ISportsCardService) not the DB context — produces cleaner, faster unit tests | Phase 3 |
+| 18 | Copilot adds bonus tests beyond what was requested — it infers missing scenarios from existing controller code | Phase 3 |
+| 19 | When building a standalone agent that needs shared DTOs, Copilot correctly moves them to the Shared project — recognize and keep these unprompted architectural improvements | Phase 8 |
+| 20 | Adding a new field to the entity doesn't automatically cascade to controller action mappings — always verify CreateCard/UpdateCard manually map new request fields to entity fields | Phase 8 |
 
 ---
 
@@ -278,8 +325,9 @@ deserialization. Include error handling and logging via ILogger.
 - Fluent API + separate configuration class in DbContext prompts = well-structured EF config
 - Real player names + grading company mix in seed prompts = accurate domain data
 - Both `add` and `update` migration commands in one prompt = complete runnable workflow
-- Explicit security instructions in Azure prompts ("Do NOT write credentials to any file") = no credential exposure
-- **Mocking at the interface level (ISportsCardService) rather than the implementation (AppDbContext) = cleaner, faster, more maintainable tests**
+- Explicit security instructions in Azure prompts = no credential exposure
+- Mocking at the interface level (ISportsCardService) = cleaner, faster, more maintainable tests
+- Documenting the Excel column schema in a dedicated file before prompting the import agent = precise, accurate output
 
 ---
 
@@ -289,7 +337,8 @@ deserialization. Include error handling and logging via ILogger.
 - Vague delete prompts don't work — name files explicitly
 - Azure infrastructure prompts without security reminders write connection strings to config
 - Documentation generation prompts can produce files with bad security guidance — always review
-- **Prompts that assume a repository pattern exists when the service uses DbContext directly — always verify the actual architecture before writing the test prompt**
+- Prompts that assume a repository pattern when the service uses DbContext directly — verify architecture first
+- Adding a boolean field to an entity in one prompt doesn't guarantee it gets mapped in all controller actions — always verify manually
 
 ---
 
