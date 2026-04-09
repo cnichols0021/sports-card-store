@@ -255,6 +255,7 @@ public class Program
             var isRookie = ParseBoolean(GetCellValue(row, columnMapping, "Rookie"));
             var isAutograph = ParseBoolean(GetCellValue(row, columnMapping, "Autograph"));
             var isRelic = ParseBoolean(GetCellValue(row, columnMapping, "Relic"));
+            var isBowmanFirst = ParseBoolean(GetCellValue(row, columnMapping, "Bowman First"));
             
             // Optional fields
             var condition = GetCellValue(row, columnMapping, "Condition")?.Trim();
@@ -277,6 +278,7 @@ public class Program
                 IsRookie = isRookie,
                 IsAutograph = isAutograph,
                 IsRelic = isRelic,
+                IsBowmanFirst = isBowmanFirst,
                 Grade = grade,
                 GradingCompany = gradingCompany,
                 Condition = condition,
