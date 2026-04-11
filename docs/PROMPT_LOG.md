@@ -246,7 +246,7 @@
   - **Fix 1 — `CardListing` model missing:** Copilot referenced a return type that didn't exist. Claude added it to Shared ✅
   - **Fix 2 — Outdated model:** `claude-3-sonnet-20240229` → `claude-sonnet-4-6` as a named constant ✅
   - **Fix 3 — Broken DI wiring:** Typed HttpClient DI pattern doesn't resolve via `GetRequiredService<HttpClient>()`. Simplified to `new HttpClient()` ✅
-  - **Duplicate class resolution:** Copilot later added `CardListing` to `SportsCardDtos.cs` causing a build failure against my `CardListingModels.cs`. Copilot correctly emptied the stub file — `CardListing` now lives in `SportsCardDtos.cs` alongside other DTOs ✅
+  - **Duplicate class resolution:** Copilot later added `CardListing` to `SportsCardDtos.cs` causing a build failure. Copilot correctly emptied the stub file — `CardListing` now lives in `SportsCardDtos.cs` ✅
 
 **To run:**
 ```
@@ -261,20 +261,12 @@ dotnet run --project src/CardListingAgent "2025 Bowman Draft Dean Curley BDC-129
 - **Date:** April 2026
 - **Output Rating:** ⚠️ Needed Tweaking
 - **Notes:**
-  - **Architecture is exactly right:** `IPricingSource` interface in `Interfaces/`, `EbayPricingSource` in `Sources/`, orchestrator in `PriceResearchAgent.cs` ✅
+  - `IPricingSource` interface in `Interfaces/`, `EbayPricingSource` in `Sources/`, orchestrator in `PriceResearchAgent.cs` ✅
   - `PricingModels.cs` added to Shared — `CardPricingRequest`, `PricingResult`, `RecentSale`, `PriceResearchResponse` ✅
-  - Confidence calculation: 10+ sales = High, 5+ = Medium, 1+ = Low ✅
-  - Smart listing price: average × 1.05/1.10 clamped within low/high bounds ✅
-  - eBay token/App ID from user secrets or env var — never hardcoded ✅
-  - **Fix 1 — Wrong eBay API (Browse vs Finding):** Original used Browse API which returns active listings, not sold prices. Fixed to eBay Finding API with `findCompletedItems` + `SoldItemsOnly=true`. Now returns actual transaction prices ✅
-    - Category locked to `261328` (Sports Trading Cards) ✅
-    - `ConvertedCurrentPrice.__value__` JSON mapping correct for Finding API format ✅
-    - Source URL now includes `LH_Sold=1` — link opens eBay's sold view ✅
-    - Sale dates parsed from real `listingInfo.endTime` instead of random approximation ✅
-    - Auth changed from Bearer token to App ID — correct for Finding API ✅
-  - **Fix 2 — Overly broad keyword exclusions:** `"auto"` and `"jersey"` were filtering out autograph and relic cards. Replaced with `"lot of"`, `"complete set"`, `"break"`, `"case"`. `"lot"` tightened to `"lot of"` to avoid false matches ✅
-- **Architecture:** Multi-source fallback documented in `docs/PRICE_RESEARCH_AGENT.md`
-- **Next steps:** Card Ladder API (Phase 2) — contact [email protected] to check if Pro subscription includes API access. Web scrape fallback (Phase 3) using session cookie if API unavailable.
+  - Confidence: 10+ sales = High, 5+ = Medium, 1+ = Low. Listing price = average × 1.05/1.10 clamped ✅
+  - **Fix 1 — Wrong eBay API:** Browse API (active listings) → Finding API with `findCompletedItems` + `SoldItemsOnly=true` ✅
+  - **Fix 2 — Keyword filter too broad:** `"auto"` and `"jersey"` blocked autograph/relic cards — replaced with `"lot of"`, `"complete set"`, `"break"`, `"case"` ✅
+- **Next steps:** Card Ladder API — contact [email protected] re: Pro subscription API access
 
 **To run:**
 ```
@@ -287,7 +279,35 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 ## CI/CD Pipeline
 
 ### Prompt CI.1 — Azure Pipelines YAML Pipeline
-- **Output Rating:** ⬜ Pending
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Prompt:**
+```
+Create an Azure Pipelines YAML file at the repo root called
+azure-pipelines.yml that builds, tests, and deploys the
+SportsCardStore solution. Trigger on main only. Build stage:
+ubuntu-latest, .NET 10 SDK, restore, build Release, run
+SportsCardStore.UnitTests with test results published and code
+coverage. Deploy stage: depends on Build, main branch only,
+publish SportsCardStore.API to Azure App Service 'sportscard-api'
+in resource group 'sports-card-store-rg' using an
+AzureServiceConnection pipeline variable. No credentials in the
+YAML — note they are in Azure Pipelines secret variables or
+App Service Configuration.
+```
+- **Output Rating:** ✅ Great
+- **Notes / What Was Changed:**
+  - `trigger: main` — pushes to main only ✅
+  - `ubuntu-latest`, `.NET 10.x` SDK ✅
+  - `restore` → `build --no-restore` → `test --no-build` — no redundant work ✅
+  - `--logger trx` for test results + `XPlat Code Coverage` — code coverage added unprompted ✅
+  - Publishes only `SportsCardStore.API`, not the agent console apps ✅
+  - Deploy stage uses `dependsOn: Build` + `condition: succeeded()` + branch condition `refs/heads/main` ✅
+  - Deployment job with `environment: production` and `runOnce` strategy — correct YAML pattern ✅
+  - `azureSubscription: "$(AzureServiceConnection)"` — variable reference, never hardcoded ✅
+  - Comment at top explicitly states secrets belong in Azure Pipelines variables or App Service Config ✅
+  - **No credentials anywhere in the file** ✅
+  - **Security instruction from Phase 2 lesson held again** — explicit prompt guidance prevented any credentials from appearing
 
 ---
 
@@ -309,10 +329,10 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 | 12 | Exposed credentials must be rotated immediately — bots scan public repos continuously | Phase 2 |
 | 13 | Use dotnet user-secrets locally, Azure App Service Configuration for production | Phase 2 |
 | 14 | Add credential file patterns to .gitignore before creating those files | Phase 2 |
-| 15 | Explicit security instructions in Azure prompts were respected — lesson carried forward | Phase 2 |
+| 15 | Explicit security instructions in Azure/CI prompts prevent credential exposure — lesson held from Phase 2 through CI.1 | Phase 2 / CI |
 | 16 | Documentation files can also contain bad security guidance — review all generated docs | Phase 3 |
 | 17 | Mock at the interface level (ISportsCardService) not the DB context — cleaner unit tests | Phase 3 |
-| 18 | Copilot adds bonus tests beyond what was requested — infers missing scenarios from existing code | Phase 3 |
+| 18 | Copilot adds bonus output beyond what was requested — infers missing scenarios from existing code | Phase 3 |
 | 19 | When building a standalone agent that needs shared DTOs, Copilot correctly moves them to Shared — keep these unprompted architectural improvements | Phase 8 |
 | 20 | Adding a new field to the entity doesn't automatically cascade to controller action mappings — always verify CreateCard/UpdateCard manually | Phase 8 |
 | 21 | **Always verify by SHA, not by Copilot's confirmation** — if SHA hasn't changed, nothing happened | Phase 8 |
@@ -321,8 +341,9 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 | 24 | Voice dictation workflow (Claude Desktop mic → Claude parses → Excel row) eliminates manual data entry — design defaults around what's most commonly true | Phase 8 |
 | 25 | Always verify the output type referenced by a new agent actually exists in the solution — Copilot generated a `CardListing` return type that wasn't defined anywhere | Phase 8 |
 | 26 | AI model strings go stale — use a named constant so updates require only one change | Phase 8 |
-| 27 | Verify which API version/endpoint an agent is using — Copilot used eBay Browse API (active listings) when Finding API (sold prices) was needed. Read/sold vs listed is a critical distinction for pricing data | Phase 8 |
-| 28 | Review keyword exclusion filters carefully — broad terms like "auto" and "jersey" blocked legitimate autograph and relic card results | Phase 8 |
+| 27 | Verify which API endpoint an agent is using — eBay Browse API (active listings) vs Finding API (sold prices) is a critical distinction for pricing data | Phase 8 |
+| 28 | Review keyword exclusion filters with domain knowledge — "auto" and "jersey" are legitimate card terms, not exclusion candidates | Phase 8 |
+| 29 | CI/CD YAML generated correctly first attempt when security instructions were explicit — `--no-restore` and `--no-build` flags used correctly, code coverage added unprompted | CI |
 
 ---
 
@@ -335,12 +356,12 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Fluent API + separate configuration class in DbContext prompts = well-structured EF config
 - Real player names + grading company mix in seed prompts = accurate domain data
 - Both `add` and `update` migration commands in one prompt = complete runnable workflow
-- Explicit security instructions in Azure prompts = no credential exposure
+- Explicit security instructions in Azure and CI prompts = no credential exposure, every time
 - Mocking at the interface level (ISportsCardService) = cleaner, faster, more maintainable tests
 - Documenting the Excel column schema before prompting the import agent = precise output
 - Always have Copilot push to GitHub before asking Claude to review — SHA is the ground truth
 - Pushing all related file changes in a single commit = atomic, reviewable changesets
-- Designing a pricing agent with an `IPricingSource` interface = swap data sources without rewriting agent logic
+- Designing a pricing agent with an `IPricingSource` interface = swap data sources without rewriting logic
 - Reviewing fixes before updating the prompt log = log reflects verified state, not claimed state
 
 ---
@@ -351,11 +372,11 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Vague delete prompts don't work — name files explicitly
 - Azure infrastructure prompts without security reminders write connection strings to config
 - Documentation generation prompts can produce files with bad security guidance — always review
-- Prompts that assume a repository pattern when the service uses DbContext directly — verify architecture first
-- Adding a field in one prompt doesn't guarantee it cascades to all controller actions — always verify manually
+- Prompts that assume a repository pattern when the service uses DbContext directly — verify first
+- Adding a field in one prompt doesn't guarantee it cascades to all controller actions — always verify
 - Asking Copilot to verify small changes it hasn't made yet — it will hallucinate completion
 - Agent prompts that don't specify where the return type model should live — Copilot may reference a class it never creates
-- Accepting an agent's API integration without verifying it targets the right endpoint — check active vs sold, v1 vs v2, etc.
+- Accepting an agent's API integration without verifying it targets the right endpoint — check active vs sold, v1 vs v2
 
 ---
 
