@@ -1,0 +1,93 @@
+# Azure Pipelines CI/CD for SportsCardStore
+# Secrets (eBay App ID, Anthropic API key, connection strings) are configured
+# as Azure Pipelines secret variables or in Azure App Service Configuration
+
+trigger:
+  - main
+
+variables:
+  buildConfiguration: "Release"
+  dotNetVersion: "10.x"
+
+stages:
+  - stage: Build
+    displayName: "Build and Test"
+    jobs:
+      - job: Build
+        displayName: "Build Job"
+        pool:
+          vmImage: "ubuntu-latest"
+
+        steps:
+          - task: UseDotNet@2
+            displayName: "Install .NET SDK"
+            inputs:
+              packageType: "sdk"
+              version: $(dotNetVersion)
+
+          - task: DotNetCoreCLI@2
+            displayName: "Restore packages"
+            inputs:
+              command: "restore"
+              projects: "**/*.sln"
+
+          - task: DotNetCoreCLI@2
+            displayName: "Build solution"
+            inputs:
+              command: "build"
+              projects: "**/*.sln"
+              arguments: "--configuration $(buildConfiguration) --no-restore"
+
+          - task: DotNetCoreCLI@2
+            displayName: "Run unit tests"
+            inputs:
+              command: "test"
+              projects: "**/SportsCardStore.UnitTests/*.csproj"
+              arguments: '--configuration $(buildConfiguration) --no-build --logger trx --collect:"XPlat Code Coverage"'
+              publishTestResults: true
+
+          - task: DotNetCoreCLI@2
+            displayName: "Publish API"
+            inputs:
+              command: "publish"
+              projects: "src/SportsCardStore.API/*.csproj"
+              arguments: "--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api"
+              publishWebProjects: false
+
+          - task: PublishBuildArtifacts@1
+            displayName: "Publish build artifacts"
+            inputs:
+              pathToPublish: "$(Build.ArtifactStagingDirectory)"
+              artifactName: "drop"
+
+  - stage: Deploy
+    displayName: "Deploy to Azure"
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployToAzure
+        displayName: "Deploy to Azure App Service"
+        pool:
+          vmImage: "ubuntu-latest"
+        environment: "production"
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@0
+                  displayName: "Download build artifacts"
+                  inputs:
+                    buildType: "current"
+                    downloadType: "single"
+                    artifactName: "drop"
+                    downloadPath: "$(System.ArtifactsDirectory)"
+
+                - task: AzureWebApp@1
+                  displayName: "Deploy to Azure App Service"
+                  inputs:
+                    azureSubscription: "$(AzureServiceConnection)"
+                    appType: "webApp"
+                    appName: "sportscard-api"
+                    resourceGroupName: "sports-card-store-rg"
+                    package: "$(System.ArtifactsDirectory)/drop/api"
