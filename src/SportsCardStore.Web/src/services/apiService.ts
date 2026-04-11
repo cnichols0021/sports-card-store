@@ -35,6 +35,12 @@ export class ApiService {
           filters.isBowmanFirst.toString(),
         );
       }
+      if (filters.isAutograph !== undefined) {
+        url.searchParams.append(
+          "isAutograph",
+          filters.isAutograph.toString(),
+        );
+      }
       if (filters.minPrice !== undefined) {
         url.searchParams.append("minPrice", filters.minPrice.toString());
       }
