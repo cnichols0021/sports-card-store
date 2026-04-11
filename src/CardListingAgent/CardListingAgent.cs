@@ -9,8 +9,8 @@ using System.Text.Json.Serialization;
 namespace CardListingAgent;
 
 /// <summary>
-/// AI agent that processes raw card descriptions using Anthropic Claude API
-/// to generate structured CardListing objects with pricing and categorization
+/// AI agent that processes raw card descriptions using the Anthropic Claude API
+/// to generate structured CardListing objects with title, description, price suggestion, tags, and category.
 /// </summary>
 public class CardListingAgent
 {
@@ -18,13 +18,14 @@ public class CardListingAgent
     private readonly ILogger<CardListingAgent> _logger;
     private readonly string _apiKey;
     private const string ClaudeApiUrl = "https://api.anthropic.com/v1/messages";
+    private const string ClaudeModel = "claude-sonnet-4-6";
 
     public CardListingAgent(HttpClient httpClient, ILogger<CardListingAgent> logger, string apiKey)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _apiKey = !string.IsNullOrWhiteSpace(apiKey) ? apiKey : throw new ArgumentException("API key cannot be null or empty", nameof(apiKey));
-        
+
         // Configure HttpClient for Anthropic API
         _httpClient.DefaultRequestHeaders.Clear();
         _httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
@@ -37,7 +38,7 @@ public class CardListingAgent
     /// </summary>
     /// <param name="rawDescription">Raw text description of the sports card</param>
     /// <param name="cancellationToken">Cancellation token for async operation</param>
-    /// <returns>Structured CardListing object with AI-generated content</returns>
+    /// <returns>Structured CardListing with AI-generated title, description, price, tags, and category</returns>
     public async Task<CardListing?> ProcessCardDescriptionAsync(string rawDescription, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(rawDescription))
@@ -46,13 +47,14 @@ public class CardListingAgent
             return null;
         }
 
-        _logger.LogInformation("Processing card description: {Description}", rawDescription.Substring(0, Math.Min(rawDescription.Length, 100)));
+        _logger.LogInformation("Processing card description: {Description}",
+            rawDescription.Substring(0, Math.Min(rawDescription.Length, 100)));
 
         try
         {
             var prompt = BuildPrompt(rawDescription);
             var response = await CallClaudeApiAsync(prompt, cancellationToken);
-            
+
             if (response == null)
             {
                 _logger.LogError("Received null response from Claude API");
@@ -60,15 +62,11 @@ public class CardListingAgent
             }
 
             var cardListing = ParseClaudeResponse(response);
-            
+
             if (cardListing != null)
-            {
                 _logger.LogInformation("Successfully processed card listing: {Title}", cardListing.Title);
-            }
             else
-            {
                 _logger.LogWarning("Failed to parse Claude response into CardListing object");
-            }
 
             return cardListing;
         }
@@ -97,14 +95,14 @@ public class CardListingAgent
     private string BuildPrompt(string rawDescription)
     {
         var availableCategories = string.Join(", ", Enum.GetNames<Category>());
-        
+
         return $@"You are an expert sports card analyst. Analyze the following raw card description and create a structured listing.
 
 Raw Description: ""{rawDescription}""
 
 Please respond with ONLY a JSON object containing these fields:
 - Title: A concise, professional title for the card listing (max 200 characters)
-- Description: A detailed description including condition, features, and collector appeal (max 2000 characters)  
+- Description: A detailed description including condition, features, and collector appeal (max 2000 characters)
 - SuggestedPrice: A realistic price in USD based on current market conditions (decimal number)
 - Tags: An array of relevant search tags (strings)
 - Category: One of these exact values: {availableCategories}
@@ -127,7 +125,7 @@ Respond with ONLY the JSON object, no additional text.";
         {
             var requestBody = new
             {
-                model = "claude-3-sonnet-20240229",
+                model = ClaudeModel,
                 max_tokens = 1000,
                 messages = new[]
                 {
@@ -138,21 +136,22 @@ Respond with ONLY the JSON object, no additional text.";
             var jsonContent = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-            _logger.LogDebug("Sending request to Claude API");
+            _logger.LogDebug("Sending request to Claude API using model {Model}", ClaudeModel);
 
             var response = await _httpClient.PostAsync(ClaudeApiUrl, content, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("Claude API returned error status {StatusCode}: {ErrorContent}", response.StatusCode, errorContent);
+                _logger.LogError("Claude API returned error status {StatusCode}: {ErrorContent}",
+                    response.StatusCode, errorContent);
                 return null;
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogDebug("Received response from Claude API");
 
-            // Parse Claude's response to extract the content
+            // Parse Claude's response envelope to extract the text content
             var claudeResponse = JsonSerializer.Deserialize<ClaudeApiResponse>(responseContent);
             return claudeResponse?.Content?.FirstOrDefault()?.Text;
         }
@@ -173,16 +172,14 @@ Respond with ONLY the JSON object, no additional text.";
                 return null;
             }
 
-            // Clean the response - remove any potential markdown or extra text
+            // Strip any markdown code fences Claude may have added despite instructions
             var cleanedResponse = response.Trim();
             if (cleanedResponse.StartsWith("```json"))
-            {
-                cleanedResponse = cleanedResponse.Substring(7);
-            }
+                cleanedResponse = cleanedResponse[7..];
+            if (cleanedResponse.StartsWith("```"))
+                cleanedResponse = cleanedResponse[3..];
             if (cleanedResponse.EndsWith("```"))
-            {
-                cleanedResponse = cleanedResponse.Substring(0, cleanedResponse.Length - 3);
-            }
+                cleanedResponse = cleanedResponse[..^3];
             cleanedResponse = cleanedResponse.Trim();
 
             var options = new JsonSerializerOptions
@@ -193,11 +190,8 @@ Respond with ONLY the JSON object, no additional text.";
 
             var cardListing = JsonSerializer.Deserialize<CardListing>(cleanedResponse, options);
 
-            // Validate the parsed result
             if (cardListing != null && ValidateCardListing(cardListing))
-            {
                 return cardListing;
-            }
 
             _logger.LogWarning("Parsed CardListing failed validation");
             return null;
@@ -213,13 +207,13 @@ Respond with ONLY the JSON object, no additional text.";
     {
         if (string.IsNullOrWhiteSpace(cardListing.Title) || cardListing.Title.Length > 200)
         {
-            _logger.LogWarning("Invalid title: null, empty, or too long");
+            _logger.LogWarning("Invalid title: null, empty, or exceeds 200 characters");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(cardListing.Description) || cardListing.Description.Length > 2000)
         {
-            _logger.LogWarning("Invalid description: null, empty, or too long");
+            _logger.LogWarning("Invalid description: null, empty, or exceeds 2000 characters");
             return false;
         }
 
@@ -240,7 +234,7 @@ Respond with ONLY the JSON object, no additional text.";
 }
 
 /// <summary>
-/// Response structure for Claude API calls
+/// Response envelope returned by the Anthropic Claude API
 /// </summary>
 internal class ClaudeApiResponse
 {
@@ -249,7 +243,7 @@ internal class ClaudeApiResponse
 }
 
 /// <summary>
-/// Content structure within Claude API responses
+/// Individual content block within a Claude API response
 /// </summary>
 internal class ClaudeContent
 {
