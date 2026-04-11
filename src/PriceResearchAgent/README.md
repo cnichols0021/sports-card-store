@@ -9,7 +9,7 @@ The Price Research Agent uses a pluggable architecture with multiple pricing sou
 ## Features
 
 - **Multi-Source Architecture**: Pluggable `IPricingSource` interface allows easy addition of new data sources
-- **eBay Browse API Integration**: Real-time completed listing data from eBay marketplace
+- **eBay Finding API Integration**: Real-time completed sales data from eBay marketplace
 - **Intelligent Pricing Logic**: Suggests low, high, and optimal listing prices based on market data
 - **Confidence Ratings**: High/Medium/Low confidence based on number of sales analyzed
 - **Comprehensive Logging**: Structured logging throughout the research process
@@ -17,12 +17,12 @@ The Price Research Agent uses a pluggable architecture with multiple pricing sou
 
 ## Current Data Sources
 
-### 1. eBay Browse API (Primary)
+### 1. eBay Finding API (Primary)
 
-- Real completed listing data from eBay marketplace
-- Filters for US listings, valid conditions, and relevant matches
-- Analyzes price distribution and recent sales trends
-- Requires eBay Developer access token
+- Real completed sales data from eBay marketplace using findCompletedItems operation
+- Filters for US listings, sold items only, and relevant matches
+- Analyzes price distribution and actual sale dates
+- Requires eBay Developer App ID (no authentication token needed)
 
 ### Future Sources
 
@@ -34,22 +34,22 @@ The Price Research Agent uses a pluggable architecture with multiple pricing sou
 ### 1. eBay Developer Account
 
 1. Create account at [developer.ebay.com](https://developer.ebay.com)
-2. Create a new application to get access tokens
-3. Generate a User Access Token for the Browse API
+2. Create a new application to get your App ID
+3. The Finding API requires only an App ID (no OAuth token needed)
 
-### 2. Configure Access Token
+### 2. Configure App ID
 
 **Option A: User Secrets (Recommended)**
 
 ```powershell
 cd src/PriceResearchAgent
-dotnet user-secrets set \"eBay:AccessToken\" \"your-access-token-here\"
+dotnet user-secrets set "eBay:AppId" "your-app-id-here"
 ```
 
 **Option B: Environment Variable**
 
 ```powershell
-$env:EBAY_ACCESS_TOKEN = \"your-access-token-here\"
+$env:EBAY_APP_ID = "your-app-id-here"
 ```
 
 ### 3. Build the Application

@@ -9,16 +9,16 @@ using System.Web;
 namespace PriceResearchAgent.Sources;
 
 /// <summary>
-/// Pricing source that queries eBay's Browse API for completed listing data
+/// Pricing source that queries eBay's Finding API for completed/sold listing data
 /// </summary>
 public class EbayPricingSource : IPricingSource
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<EbayPricingSource> _logger;
     private readonly IConfiguration _configuration;
-    private const string EbayApiBaseUrl = "https://api.ebay.com/buy/browse/v1";
+    private const string EbayApiBaseUrl = "https://svcs.ebay.com/services/search/FindingService/v1";
 
-    public string SourceName => "eBay Browse API";
+    public string SourceName => "eBay Finding API";
 
     public EbayPricingSource(HttpClient httpClient, ILogger<EbayPricingSource> logger, IConfiguration configuration)
     {
@@ -31,22 +31,21 @@ public class EbayPricingSource : IPricingSource
     {
         try
         {
-            _logger.LogInformation("Searching eBay for pricing data: {Player} {Year} {Brand} {Set}", 
+            _logger.LogInformation("Searching eBay for completed sales data: {Player} {Year} {Brand} {Set}", 
                 request.PlayerName, request.Year, request.Brand, request.SetName);
 
-            var accessToken = GetAccessToken();
-            if (string.IsNullOrWhiteSpace(accessToken))
+            var appId = GetAppId();
+            if (string.IsNullOrWhiteSpace(appId))
             {
-                _logger.LogError("eBay access token not configured");
+                _logger.LogError("eBay App ID not configured");
                 return null;
             }
 
             var searchQuery = BuildSearchQuery(request);
-            var searchUrl = BuildSearchUrl(searchQuery);
+            var searchUrl = BuildSearchUrl(searchQuery, appId);
 
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
-            _httpClient.DefaultRequestHeaders.Add("X-EBAY-C-MARKETPLACE-ID", "EBAY_US");
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "SportsCardStore-PriceResearchAgent/1.0");
 
             var response = await _httpClient.GetAsync(searchUrl);
             
@@ -58,41 +57,58 @@ public class EbayPricingSource : IPricingSource
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var searchResponse = JsonSerializer.Deserialize<EbaySearchResponse>(content, new JsonSerializerOptions 
+            var searchResponse = JsonSerializer.Deserialize<EbayFindingResponse>(content, new JsonSerializerOptions 
             { 
                 PropertyNameCaseInsensitive = true 
             });
 
-            if (searchResponse?.ItemSummaries == null || !searchResponse.ItemSummaries.Any())
+            var items = searchResponse?.FindCompletedItemsResponse?.FirstOrDefault()?.SearchResult?.FirstOrDefault()?.Item;
+            if (items == null || !items.Any())
             {
-                _logger.LogInformation("No eBay results found for search query: {Query}", searchQuery);
-                return null;
+                _logger.LogInformation("No eBay completed sales found for search query: {Query}", searchQuery);
+                return new PricingResult
+                {
+                    SourceName = SourceName,
+                    SalesCount = 0
+                };
             }
 
-            return ProcessSearchResults(searchResponse, request);
+            return ProcessSearchResults(items, request);
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "HTTP error querying eBay API");
-            return null;
+            return new PricingResult
+            {
+                SourceName = SourceName,
+                SalesCount = 0
+            };
         }
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Error parsing eBay API response");
-            return null;
+            return new PricingResult
+            {
+                SourceName = SourceName,
+                SalesCount = 0
+            };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error querying eBay pricing");
-            return null;
+            return new PricingResult
+            {
+                SourceName = SourceName,
+                SalesCount = 0
+            };
         }
     }
 
-    private string? GetAccessToken()
+    private string? GetAppId()
     {
         // Try user secrets first, then configuration
-        return _configuration["eBay:AccessToken"] ?? 
-               Environment.GetEnvironmentVariable("EBAY_ACCESS_TOKEN");
+        return _configuration["eBay:AppId"] ?? 
+               Environment.GetEnvironmentVariable("EBAY_APP_ID");
     }
 
     private string BuildSearchQuery(CardPricingRequest request)
@@ -118,31 +134,44 @@ public class EbayPricingSource : IPricingSource
         return string.Join(" ", parts);
     }
 
-    private string BuildSearchUrl(string searchQuery)
+    private string BuildSearchUrl(string searchQuery, string appId)
     {
         var queryParams = new Dictionary<string, string>
         {
-            ["q"] = searchQuery,
-            ["filter"] = "buyingOptions:{AUCTION|FIXED_PRICE},itemLocationCountry:US,deliveryCountry:US,conditionIds:{1000|1500|2000|2500|3000|4000|5000|6000}",
-            ["sort"] = "newlyListed",
-            ["limit"] = "50"
+            ["OPERATION-NAME"] = "findCompletedItems",
+            ["SERVICE-VERSION"] = "1.0.0", 
+            ["SECURITY-APPNAME"] = appId,
+            ["RESPONSE-DATA-FORMAT"] = "JSON",
+            ["REST-PAYLOAD"] = "",
+            ["keywords"] = searchQuery,
+            ["categoryId"] = "261328", // Sports Trading Cards category
+            ["itemFilter(0).name"] = "SoldItemsOnly",
+            ["itemFilter(0).value"] = "true",
+            ["itemFilter(1).name"] = "ListingType",
+            ["itemFilter(1).value(0)"] = "Auction",
+            ["itemFilter(1).value(1)"] = "FixedPrice",
+            ["itemFilter(2).name"] = "Country",
+            ["itemFilter(2).value"] = "US",
+            ["sortOrder"] = "EndTimeSoonest",
+            ["paginationInput.entriesPerPage"] = "50"
         };
 
         var queryString = string.Join("&", queryParams.Select(kvp => 
             $"{kvp.Key}={HttpUtility.UrlEncode(kvp.Value)}"));
 
-        return $"{EbayApiBaseUrl}/item_summary/search?{queryString}";
+        return $"{EbayApiBaseUrl}?{queryString}";
     }
 
-    private PricingResult ProcessSearchResults(EbaySearchResponse searchResponse, CardPricingRequest request)
+    private PricingResult ProcessSearchResults(List<EbayCompletedItem> items, CardPricingRequest request)
     {
-        var validItems = searchResponse.ItemSummaries
-                ?.Where(item => IsValidMatch(item, request))
-                ?.Where(item => item.Price?.Value != null)
-                ?.ToList() ?? new List<EbayItemSummary>();
+        var validItems = items
+            .Where(item => IsValidMatch(item, request))
+            .Where(item => item.SellingStatus?.ConvertedCurrentPrice?.Value != null && item.SellingStatus.ConvertedCurrentPrice.Value > 0)
+            .ToList();
+
         if (!validItems.Any())
         {
-            _logger.LogInformation("No valid matches found in eBay search results");
+            _logger.LogInformation("No valid completed sales found in eBay search results");
             return new PricingResult
             {
                 SourceName = SourceName,
@@ -150,11 +179,11 @@ public class EbayPricingSource : IPricingSource
             };
         }
 
-        var prices = validItems.Select(item => item.Price!.Value).ToList();
+        var prices = validItems.Select(item => item.SellingStatus!.ConvertedCurrentPrice!.Value).ToList();
         var recentSales = validItems.Take(10).Select(item => new RecentSale
         {
-            Price = item.Price!.Value,
-            SaleDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30)), // Approximate - eBay doesn't provide exact sale dates in Browse API
+            Price = item.SellingStatus!.ConvertedCurrentPrice!.Value,
+            SaleDate = DateTime.TryParse(item.ListingInfo?.EndTime, out var endTime) ? endTime : DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30)),
             Platform = "eBay",
             ListingTitle = item.Title ?? "Unknown"
         }).ToList();
@@ -166,17 +195,17 @@ public class EbayPricingSource : IPricingSource
             HighPrice = prices.Max(),
             AveragePrice = prices.Average(),
             SalesCount = prices.Count,
-            SourceUrl = $"https://www.ebay.com/sch/i.html?_nkw={HttpUtility.UrlEncode(BuildSearchQuery(request))}",
+            SourceUrl = $"https://www.ebay.com/sch/i.html?_nkw={HttpUtility.UrlEncode(BuildSearchQuery(request))}&LH_Sold=1",
             RecentSales = recentSales
         };
 
-        _logger.LogInformation("eBay pricing found: Low=${Low:F2}, High=${High:F2}, Average=${Avg:F2}, Sales={Count}", 
+        _logger.LogInformation("eBay completed sales found: Low=${Low:F2}, High=${High:F2}, Average=${Avg:F2}, Sales={Count}", 
             result.LowPrice, result.HighPrice, result.AveragePrice, result.SalesCount);
 
         return result;
     }
 
-    private bool IsValidMatch(EbayItemSummary item, CardPricingRequest request)
+    private bool IsValidMatch(EbayCompletedItem item, CardPricingRequest request)
     {
         if (string.IsNullOrWhiteSpace(item.Title))
             return false;
@@ -189,42 +218,70 @@ public class EbayPricingSource : IPricingSource
             return false;
 
         // Filter out obvious non-matches
-        var excludeKeywords = new[] { "lot", "collection", "box", "pack", "auto", "jersey" };
+        var excludeKeywords = new[] { "lot of", "collection", "box", "pack", "complete set", "break", "case" };
         if (excludeKeywords.Any(keyword => title.Contains(keyword)))
             return false;
 
         // Price validation - exclude extremely low or high prices that are likely errors
-        if (item.Price?.Value < 0.50m || item.Price?.Value > 50000m)
+        var price = item.SellingStatus?.ConvertedCurrentPrice?.Value ?? 0;
+        if (price < 0.50m || price > 50000m)
             return false;
 
         return true;
     }
 }
 
-// eBay API Response Models
-internal class EbaySearchResponse
+// eBay Finding API Response Models
+internal class EbayFindingResponse
 {
-    [JsonPropertyName("itemSummaries")]
-    public List<EbayItemSummary>? ItemSummaries { get; set; }
+    [JsonPropertyName("findCompletedItemsResponse")]
+    public List<FindCompletedItemsResponseType>? FindCompletedItemsResponse { get; set; }
 }
 
-internal class EbayItemSummary
+internal class FindCompletedItemsResponseType
+{
+    [JsonPropertyName("searchResult")]
+    public List<SearchResultType>? SearchResult { get; set; }
+}
+
+internal class SearchResultType
+{
+    [JsonPropertyName("item")]
+    public List<EbayCompletedItem>? Item { get; set; }
+}
+
+internal class EbayCompletedItem
 {
     [JsonPropertyName("title")]
     public string? Title { get; set; }
 
-    [JsonPropertyName("price")]
-    public EbayPrice? Price { get; set; }
+    [JsonPropertyName("sellingStatus")]
+    public SellingStatus? SellingStatus { get; set; }
 
-    [JsonPropertyName("itemWebUrl")]
-    public string? ItemWebUrl { get; set; }
+    [JsonPropertyName("listingInfo")]
+    public ListingInfo? ListingInfo { get; set; }
+
+    [JsonPropertyName("viewItemURL")]
+    public string? ViewItemURL { get; set; }
 }
 
-internal class EbayPrice
+internal class SellingStatus
 {
-    [JsonPropertyName("value")]
+    [JsonPropertyName("convertedCurrentPrice")]
+    public ConvertedCurrentPrice? ConvertedCurrentPrice { get; set; }
+}
+
+internal class ConvertedCurrentPrice
+{
+    [JsonPropertyName("__value__")]
     public decimal Value { get; set; }
 
-    [JsonPropertyName("currency")]
-    public string? Currency { get; set; }
+    [JsonPropertyName("@currencyId")]
+    public string? CurrencyId { get; set; }
+}
+
+internal class ListingInfo
+{
+    [JsonPropertyName("endTime")]
+    public string? EndTime { get; set; }
 }

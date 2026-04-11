@@ -142,8 +142,8 @@ public class Program
         _logger?.LogError("Grade: 0.1 to 10.0 (leave empty for raw cards)");
         _logger?.LogError("");
         _logger?.LogError("Configuration:");
-        _logger?.LogError("  Set eBay access token via user secrets or EBAY_ACCESS_TOKEN environment variable");
-        _logger?.LogError("  Example: dotnet user-secrets set \"eBay:AccessToken\" \"your-token-here\"");
+        _logger?.LogError("  Set eBay App ID via user secrets or EBAY_APP_ID environment variable");
+        _logger?.LogError("  Example: dotnet user-secrets set \"eBay:AppId\" \"your-app-id-here\"");
     }
 
     private static void LogRequestDetails(CardPricingRequest request)
