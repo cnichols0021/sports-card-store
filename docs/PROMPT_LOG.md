@@ -149,7 +149,30 @@
 
 ## Phase 4 — Frontend
 
-*(Prompts to be added as this phase begins)*
+### Prompt 4.1 — React + Vite Frontend Scaffold
+- **Tool:** GitHub Copilot Chat + Claude (fixes)
+- **Date:** April 2026
+- **Output Rating:** ⚠️ Needed Tweaking
+- **Notes:**
+  - Created `src/SportsCardStore.Web/` with Vite + React 18 + TypeScript + Tailwind + react-router-dom v6 ✅
+  - Correct folder structure: `components/`, `pages/`, `services/`, `types/`, `utils/` ✅
+  - `VITE_API_BASE_URL` from `.env` with localhost fallback — never hardcoded ✅
+  - `.env` and all local env variants correctly gitignored, `.env.example` present ✅
+  - TypeScript interfaces match C# DTOs exactly including `isBowmanFirst`, `parallelName`, `printRun` ✅
+  - Enum values match C# integer backing values ✅
+  - `apiService.ts` uses `fetch` + `URL`/`searchParams` — clean query building ✅
+  - Both pages (`CardListPage`, `CardDetailPage`) on correct routes ✅
+  - `LoadingSpinner`, `ErrorMessage`, `CardItem`, `CardFilters`, `Pagination` components all created ✅
+  - **Fix 1 — `isAutograph` filter missing from API call:** Defined in `CardFilters` type but never appended to URL params. Claude added the missing `searchParams.append` block ✅
+  - **Fix 2 — Build artifacts committed:** `tsconfig.app.tsbuildinfo` and `tsconfig.node.tsbuildinfo` were committed to the repo. Claude added `*.tsbuildinfo` to `.gitignore`. Run `git rm --cached src/SportsCardStore.Web/tsconfig.app.tsbuildinfo src/SportsCardStore.Web/tsconfig.node.tsbuildinfo` locally to stop tracking them ✅
+
+**To run locally:**
+```
+cd src/SportsCardStore.Web
+cp .env.example .env
+npm install
+npm run dev
+```
 
 ---
 
@@ -281,33 +304,14 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 ### Prompt CI.1 — Azure Pipelines YAML Pipeline
 - **Tool:** GitHub Copilot Chat
 - **Date:** April 2026
-- **Prompt:**
-```
-Create an Azure Pipelines YAML file at the repo root called
-azure-pipelines.yml that builds, tests, and deploys the
-SportsCardStore solution. Trigger on main only. Build stage:
-ubuntu-latest, .NET 10 SDK, restore, build Release, run
-SportsCardStore.UnitTests with test results published and code
-coverage. Deploy stage: depends on Build, main branch only,
-publish SportsCardStore.API to Azure App Service 'sportscard-api'
-in resource group 'sports-card-store-rg' using an
-AzureServiceConnection pipeline variable. No credentials in the
-YAML — note they are in Azure Pipelines secret variables or
-App Service Configuration.
-```
 - **Output Rating:** ✅ Great
-- **Notes / What Was Changed:**
-  - `trigger: main` — pushes to main only ✅
-  - `ubuntu-latest`, `.NET 10.x` SDK ✅
+- **Notes:**
+  - `trigger: main`, `ubuntu-latest`, `.NET 10.x` SDK ✅
   - `restore` → `build --no-restore` → `test --no-build` — no redundant work ✅
-  - `--logger trx` for test results + `XPlat Code Coverage` — code coverage added unprompted ✅
-  - Publishes only `SportsCardStore.API`, not the agent console apps ✅
-  - Deploy stage uses `dependsOn: Build` + `condition: succeeded()` + branch condition `refs/heads/main` ✅
-  - Deployment job with `environment: production` and `runOnce` strategy — correct YAML pattern ✅
-  - `azureSubscription: "$(AzureServiceConnection)"` — variable reference, never hardcoded ✅
-  - Comment at top explicitly states secrets belong in Azure Pipelines variables or App Service Config ✅
-  - **No credentials anywhere in the file** ✅
-  - **Security instruction from Phase 2 lesson held again** — explicit prompt guidance prevented any credentials from appearing
+  - Code coverage via `XPlat Code Coverage` added unprompted ✅
+  - Deploy stage: `dependsOn: Build`, branch condition, `environment: production`, `runOnce` strategy ✅
+  - `$(AzureServiceConnection)` — variable reference, never hardcoded ✅
+  - No credentials anywhere in the file ✅
 
 ---
 
@@ -344,6 +348,8 @@ App Service Configuration.
 | 27 | Verify which API endpoint an agent is using — eBay Browse API (active listings) vs Finding API (sold prices) is a critical distinction for pricing data | Phase 8 |
 | 28 | Review keyword exclusion filters with domain knowledge — "auto" and "jersey" are legitimate card terms, not exclusion candidates | Phase 8 |
 | 29 | CI/CD YAML generated correctly first attempt when security instructions were explicit — `--no-restore` and `--no-build` flags used correctly, code coverage added unprompted | CI |
+| 30 | TypeScript frontend: a filter defined in a type interface is not automatically wired to the API call — verify every filter param is actually appended to the URL | Phase 4 |
+| 31 | Add `*.tsbuildinfo` to `.gitignore` for any TypeScript/Vite project — these build cache files are generated locally and should never be committed | Phase 4 |
 
 ---
 
@@ -377,6 +383,7 @@ App Service Configuration.
 - Asking Copilot to verify small changes it hasn't made yet — it will hallucinate completion
 - Agent prompts that don't specify where the return type model should live — Copilot may reference a class it never creates
 - Accepting an agent's API integration without verifying it targets the right endpoint — check active vs sold, v1 vs v2
+- Frontend filter types don't automatically wire to API calls — always verify every filter param is appended
 
 ---
 
