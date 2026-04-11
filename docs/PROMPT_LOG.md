@@ -135,7 +135,6 @@
   - ILogger + exception handling throughout ✅
   - Minor: redundant timestamp set in controller (AppDbContext already handles this)
   - Minor: PagedResult<T> in ISportsCardService.cs — should be its own file
-  - Flag: AZURE_DEPLOYMENT.md Step 2 instructed appsettings.json — fixed in follow-up
 
 ### Prompt 3.2 — Unit Tests
 - **Tool:** GitHub Copilot Chat
@@ -147,7 +146,6 @@
   - Test naming: MethodName_Condition_ExpectedResult ✅
   - Verify() calls confirm Delete service interactions ✅
   - Status codes AND body values validated on every test ✅
-  - Note: Original prompt said "mock repository" — correctly updated to mock ISportsCardService at controller level
 
 ---
 
@@ -209,18 +207,68 @@
 - **Date:** April 2026
 - **Output Rating:** ✅ Great
 - **Notes:**
-  - Copilot claimed the work was already done twice without making any changes — SHA was unchanged both times, confirming hallucination
-  - Claude pushed the fix directly: `isBowmanFirst = ParseBoolean(GetCellValue(row, columnMapping, "Bowman First"))` added to boolean fields section, `IsBowmanFirst = isBowmanFirst` added to CreateSportsCardRequest initializer ✅
-  - **Key lesson:** Always verify by SHA, not by Copilot's confirmation. If SHA hasn't changed, nothing happened.
+  - Copilot hallucinated completion twice — SHA was unchanged both times
+  - Claude pushed the fix directly: `isBowmanFirst = ParseBoolean(GetCellValue(..., "Bowman First"))` and `IsBowmanFirst = isBowmanFirst` in request initializer ✅
 
 ### Prompt 8.2.4 — Fix Controller CreateCard/UpdateCard Missing Field Mappings
 - **Tool:** Claude (direct GitHub push)
 - **Date:** April 2026
 - **Output Rating:** ✅ Great
 - **Notes:**
-  - Copilot correctly mapped SetName, IsRookie, IsAutograph, IsRelic, IsBowmanFirst in the entity initializer (CreateCard) and entity update block (UpdateCard) ✅
-  - **Additional fix pushed by Claude:** Response DTOs inside CreateCard and UpdateCard were still missing the new fields — the returned object after POST/PUT would have been incomplete. Claude refactored all three endpoints (GET, GET by id, POST, PUT) to use a single private `MapToResponse(SportsCard card)` helper method, ensuring all fields are returned consistently from every endpoint ✅
-  - This is the correct long-term pattern — a single mapping method means adding a field in the future only requires one change, not four
+  - All new fields mapped in CreateCard entity initializer and UpdateCard entity update block ✅
+  - Claude added `MapToResponse()` private helper — all endpoints now return consistent, complete response DTOs ✅
+
+### Prompt 8.2.5 — Add Parallel Fields (ParallelName + PrintRun)
+- **Tool:** Claude (direct GitHub push)
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - Added `ParallelName` (string?, max 100) and `PrintRun` (int?, range 1-10000) to entity, all Shared DTOs, service filters, controller query params, and InventoryImportAgent ✅
+  - Service filter: `parallelName` does case-insensitive contains search; `maxPrintRun` returns all cards numbered at or below the value ✅
+  - InventoryImportAgent reads "Parallel" and "Print Run" columns — both nullable, base cards leave blank ✅
+  - Migration `20260409204603_AddParallelFields` generated and applied to Azure SQL ✅
+  - All 6 files pushed in a single commit ✅
+  - **Origin:** User identified parallels as a key value driver in the hobby — both numbered (/25, /10, 1/1) and non-numbered (Gold, Sky Blue) variants needed separate fields to enable filtering and pricing research
+
+### Prompt 8.2.6 — Default Condition to "Near Mint or Better"
+- **Tool:** Claude (direct GitHub push)
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - Added `private const string DefaultCondition = "Near Mint or Better"` to InventoryImportAgent ✅
+  - Condition column now falls back to that constant when blank in Excel ✅
+  - Same default applied by Claude when parsing dictated card data in chat ✅
+  - **Origin:** User uses Claude Desktop voice dictation to enter card data — skipping blank optional fields is essential for efficient dictation workflow
+
+---
+
+## Current Excel Column Schema (21 columns)
+
+| # | Column | Required | Default |
+|---|---|---|---|
+| 1 | Player Name | ✅ | — |
+| 2 | Team | ✅ | — |
+| 3 | Brand | ✅ | — |
+| 4 | Set Name | ✅ | — |
+| 5 | Card Number | ✅ | — |
+| 6 | Year | ✅ | — |
+| 7 | Sport | ✅ | — |
+| 8 | Rookie | | false |
+| 9 | Autograph | | false |
+| 10 | Relic | | false |
+| 11 | Bowman First | | false |
+| 12 | Grading Company | ✅ | — |
+| 13 | Card Grade | | null (blank for Raw) |
+| 14 | Condition | | Near Mint or Better |
+| 15 | Price | ✅ | — |
+| 16 | Quantity | ✅ | — |
+| 17 | Parallel | | null (blank for base) |
+| 18 | Print Run | | null (blank for non-numbered) |
+| 19 | Description | | null |
+| 20 | Image Url | | null |
+| 21 | Is Available | | true |
+
+---
 
 ### Prompt 8.1 — Card Listing Agent (Scaffold)
 - **Tool:** GitHub Copilot Chat
@@ -232,7 +280,7 @@ and returns a structured CardListing object with Title, Description,
 SuggestedPrice, Tags, and Category. Use System.Text.Json for
 deserialization. Include error handling and logging via ILogger.
 ```
-- **Output Rating:** ⬜ Pending
+- **Output Rating:** ⬜ Pending — **NEXT UP**
 
 ### Prompt 8.3 — Price Research Agent
 - **Output Rating:** ⬜ Pending
@@ -269,9 +317,11 @@ deserialization. Include error handling and logging via ILogger.
 | 17 | Mock at the interface level (ISportsCardService) not the DB context — produces cleaner, faster unit tests | Phase 3 |
 | 18 | Copilot adds bonus tests beyond what was requested — it infers missing scenarios from existing controller code | Phase 3 |
 | 19 | When building a standalone agent that needs shared DTOs, Copilot correctly moves them to the Shared project — recognize and keep these unprompted architectural improvements | Phase 8 |
-| 20 | Adding a new field to the entity doesn't automatically cascade to controller action mappings — always verify CreateCard/UpdateCard manually map new request fields to entity fields | Phase 8 |
-| 21 | **Always verify by SHA, not by Copilot's confirmation** — if the file SHA hasn't changed after Copilot claims to have made a change, nothing happened. Always have Copilot push to GitHub before asking Claude to review | Phase 8 |
-| 22 | A single `MapToResponse()` helper method in the controller is the correct pattern — ensures all fields are returned consistently across every endpoint, and adding a new field in the future only requires one change | Phase 8 |
+| 20 | Adding a new field to the entity doesn't automatically cascade to controller action mappings — always verify CreateCard/UpdateCard manually | Phase 8 |
+| 21 | **Always verify by SHA, not by Copilot's confirmation** — if SHA hasn't changed after Copilot claims to have made a change, nothing happened | Phase 8 |
+| 22 | A single `MapToResponse()` helper in the controller ensures all fields returned consistently — adding a field in future only requires one change | Phase 8 |
+| 23 | Domain knowledge drives better data models — user's hobby expertise (parallel cards, print runs, Bowman Firsts) produced a richer schema than any generic sports card template would have | Phase 8 |
+| 24 | Voice dictation workflow (Claude Desktop mic → Claude parses → Excel row) eliminates manual data entry entirely — design data defaults around what's most commonly true to minimize required speech | Phase 8 |
 
 ---
 
@@ -286,8 +336,9 @@ deserialization. Include error handling and logging via ILogger.
 - Both `add` and `update` migration commands in one prompt = complete runnable workflow
 - Explicit security instructions in Azure prompts = no credential exposure
 - Mocking at the interface level (ISportsCardService) = cleaner, faster, more maintainable tests
-- Documenting the Excel column schema in a dedicated file before prompting the import agent = precise output
-- **Always have Copilot push/merge to GitHub before asking Claude to review — SHA is the ground truth**
+- Documenting the Excel column schema before prompting the import agent = precise output
+- Always have Copilot push to GitHub before asking Claude to review — SHA is the ground truth
+- Pushing all related file changes in a single commit = atomic, reviewable changesets
 
 ---
 
@@ -298,8 +349,8 @@ deserialization. Include error handling and logging via ILogger.
 - Azure infrastructure prompts without security reminders write connection strings to config
 - Documentation generation prompts can produce files with bad security guidance — always review
 - Prompts that assume a repository pattern when the service uses DbContext directly — verify architecture first
-- Adding a boolean field to an entity in one prompt doesn't guarantee it gets mapped in all controller actions — always verify manually
-- **Asking Copilot to verify small changes it hasn't made yet — it will hallucinate completion. Use SHA to verify, not Copilot's word**
+- Adding a field in one prompt doesn't guarantee it cascades to all controller actions — always verify manually
+- Asking Copilot to verify small changes it hasn't made yet — it will hallucinate completion
 
 ---
 
