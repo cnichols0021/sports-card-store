@@ -82,6 +82,42 @@ export class ApiService {
 
     return await response.json();
   }
+
+  async uploadCardImage(
+    id: number,
+    file: File,
+  ): Promise<SportsCardResponse> {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(
+      `${this.baseUrl}/api/sportscards/${id}/image`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Upload failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async deleteCardImage(id: number): Promise<void> {
+    const response = await fetch(
+      `${this.baseUrl}/api/sportscards/${id}/image`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete image: ${response.statusText}`);
+    }
+  }
 }
 
 export const apiService = new ApiService();

@@ -4,6 +4,7 @@ import { SportsCardResponse } from "../types";
 import { apiService } from "../services/apiService";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorMessage } from "../components/ErrorMessage";
+import { ImageUpload } from "../components/ImageUpload";
 import {
   formatCategory,
   formatGradingCompany,
@@ -17,6 +18,7 @@ export const CardDetailPage = () => {
   const [card, setCard] = useState<SportsCardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCard = async () => {
@@ -45,6 +47,15 @@ export const CardDetailPage = () => {
 
   const handleBack = () => {
     navigate("/");
+  };
+
+  const handleUploadSuccess = (updatedCard: SportsCardResponse) => {
+    setCard(updatedCard);
+    setUploadError(null);
+  };
+
+  const handleUploadError = (message: string) => {
+    setUploadError(message);
   };
 
   if (loading) {
@@ -117,7 +128,7 @@ export const CardDetailPage = () => {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="md:flex">
             {/* Card Image */}
-            <div className="md:w-1/2">
+            <div className="md:w-1/2 relative">
               {card.imageUrl ? (
                 <img
                   src={card.imageUrl}
@@ -141,10 +152,26 @@ export const CardDetailPage = () => {
                   </svg>
                 </div>
               )}
+              {/* Upload button overlaid on image area */}
+              <div className="absolute bottom-3 right-3">
+                <ImageUpload
+                  cardId={card.id}
+                  hasImage={!!card.imageUrl}
+                  onUploadSuccess={handleUploadSuccess}
+                  onError={handleUploadError}
+                />
+              </div>
             </div>
 
             {/* Card Details */}
             <div className="md:w-1/2 p-8">
+              {/* Upload error */}
+              {uploadError && (
+                <div className="mb-4">
+                  <ErrorMessage message={uploadError} />
+                </div>
+              )}
+
               {/* Header */}
               <div className="mb-6">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
