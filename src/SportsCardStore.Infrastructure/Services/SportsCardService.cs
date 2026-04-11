@@ -154,7 +154,28 @@ namespace SportsCardStore.Infrastructure.Services
                 throw;
             }
         }
+        public async Task<SportsCard?> UpdateImageUrlAsync(int id, string? imageUrl)
+        {
+            try
+            {
+                var card = await _context.SportsCards.FindAsync(id);
+                if (card == null)
+                    return null;
 
+                card.ImageUrl = imageUrl;
+                card.UpdatedDate = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Updated image URL for sports card {Id}", id);
+                
+                return card;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating image URL for sports card with ID {Id}", id);
+                throw;
+            }
+        }
         public async Task<bool> DeleteAsync(int id)
         {
             try

@@ -26,6 +26,7 @@ namespace SportsCardStore.Core.Interfaces
         Task<SportsCard?> GetByIdAsync(int id);
         Task<SportsCard> CreateAsync(SportsCard sportsCard);
         Task<SportsCard?> UpdateAsync(int id, SportsCard sportsCard);
+        Task<SportsCard?> UpdateImageUrlAsync(int id, string? imageUrl);
         Task<bool> DeleteAsync(int id);
     }
 
