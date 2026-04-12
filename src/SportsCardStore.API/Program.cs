@@ -36,7 +36,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // React dev server
+        policy.WithOrigins(
+                "http://localhost:5173",  // Vite dev server (default)
+                "http://localhost:5174",  // Vite fallback port
+                "http://localhost:3000"   // CRA / alternative dev servers
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
