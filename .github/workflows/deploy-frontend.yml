@@ -1,0 +1,52 @@
+name: Deploy Frontend to Azure Static Web Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/SportsCardStore.Web/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'src/SportsCardStore.Web/package-lock.json'
+
+      - name: Install Dependencies
+        run: |
+          cd src/SportsCardStore.Web
+          npm ci
+
+      - name: Build Application
+        run: |
+          cd src/SportsCardStore.Web
+          VITE_API_BASE_URL=https://sportscard-api.azurewebsites.net npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to Azure Static Web Apps
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/src/SportsCardStore.Web"
+          api_location: ""
+          output_location: "dist"
+          skip_app_build: true

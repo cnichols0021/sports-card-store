@@ -44,13 +44,23 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",  // CRA default
-                "http://localhost:3001",  // CRA / Vite fallback
-                "http://localhost:3002",  // CRA / Vite fallback
-                "http://localhost:5173",  // Vite default
-                "http://localhost:5174"   // Vite fallback
-              )
+        var origins = new List<string>
+        {
+            "http://localhost:3000",  // CRA default
+            "http://localhost:3001",  // CRA / Vite fallback
+            "http://localhost:3002",  // CRA / Vite fallback
+            "http://localhost:5173",  // Vite default
+            "http://localhost:5174"   // Vite fallback
+        };
+        
+        // Add production frontend URL if configured
+        var frontendUrl = builder.Configuration["FrontendUrl"];
+        if (!string.IsNullOrEmpty(frontendUrl))
+        {
+            origins.Add(frontendUrl);
+        }
+        
+        policy.WithOrigins(origins.ToArray())
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -62,33 +72,34 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Initialize database on startup (development only)
-if (app.Environment.IsDevelopment())
+// Initialize database on startup
+using var scope = app.Services.CreateScope();
+try
 {
-    using var scope = app.Services.CreateScope();
-    try
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    if (isSqlite)
     {
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        // SQLite local dev: EnsureCreated builds the schema directly from the
+        // current model — no migrations required, no provider-compatibility issues.
+        await context.Database.EnsureCreatedAsync();
+    }
+    else
+    {
+        // SQL Server (Azure): apply any pending EF migrations.
+        await context.Database.MigrateAsync();
+    }
 
-        if (isSqlite)
-        {
-            // SQLite local dev: EnsureCreated builds the schema directly from the
-            // current model — no migrations required, no provider-compatibility issues.
-            await context.Database.EnsureCreatedAsync();
-        }
-        else
-        {
-            // SQL Server (Azure): apply any pending EF migrations.
-            await context.Database.MigrateAsync();
-        }
-
+    // Only seed data in development
+    if (app.Environment.IsDevelopment())
+    {
         await SportsCardSeeder.SeedAsync(context);
     }
-    catch (Exception ex)
-    {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while initializing the database.");
-    }
+}
+catch (Exception ex)
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while initializing the database.");
 }
 
 // Configure the HTTP request pipeline.

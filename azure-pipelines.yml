@@ -83,6 +83,26 @@ stages:
                     artifactName: "drop"
                     downloadPath: "$(System.ArtifactsDirectory)"
 
+                - task: UseDotNet@2
+                  displayName: "Install .NET SDK for migrations"
+                  inputs:
+                    packageType: "sdk"
+                    version: $(dotNetVersion)
+
+                - task: DotNetCoreCLI@2
+                  displayName: "Install EF Core tools"
+                  inputs:
+                    command: "custom"
+                    custom: "tool"
+                    arguments: "install --global dotnet-ef"
+
+                - task: DotNetCoreCLI@2
+                  displayName: "Run EF Core Database Migrations"
+                  inputs:
+                    command: "custom"
+                    custom: "ef"
+                    arguments: "database update --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API --connection \"$(AzureConnectionString)\" --verbose"
+
                 - task: AzureWebApp@1
                   displayName: "Deploy to Azure App Service"
                   inputs:
