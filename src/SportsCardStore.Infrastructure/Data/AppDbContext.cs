@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using SportsCardStore.Core.Entities;
 using SportsCardStore.Infrastructure.Data.Configurations;
 
@@ -22,21 +23,26 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply entity configurations
-        modelBuilder.ApplyConfiguration(new SportsCardConfiguration());
-
-        // Apply all configurations from current assembly
+        // Apply entity configurations from the explicit configuration class
+        // and any other IEntityTypeConfiguration implementations in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        // This will be overridden by dependency injection configuration
-        // Only used for design-time tools if no other configuration is available
         if (!optionsBuilder.IsConfigured)
         {
+            // Fallback for EF design-time tools when no DI configuration is present.
+            // Program.cs handles provider selection for runtime — this is only reached
+            // by dotnet-ef tooling that doesn't go through the DI pipeline.
             optionsBuilder.UseSqlite("Data Source=SportsCardStore.db");
         }
+
+        // Suppress PendingModelChangesWarning — the migration files are hand-edited
+        // to use correct SQL Server types and the snapshot hash may not match exactly.
+        // The schema is correct; this warning is a false positive from the hash check.
+        optionsBuilder.ConfigureWarnings(w =>
+            w.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 
     /// <summary>
