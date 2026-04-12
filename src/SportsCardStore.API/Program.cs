@@ -9,11 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-// Add Entity Framework
+// Add Entity Framework with explicit SQLite connection string
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlServer(connectionString);
+    // Use explicit SQLite connection string to avoid conflicts
+    var connectionString = "Data Source=SportsCardStore.db";
+    options.UseSqlite(connectionString);
 });
 
 // Add Blob Storage Service
@@ -49,6 +50,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Disable seeding temporarily until connection string issue is resolved
+/*
 // Seed database in development environment
 if (app.Environment.IsDevelopment())
 {
@@ -58,8 +61,8 @@ if (app.Environment.IsDevelopment())
         {
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             
-            // Apply pending migrations
-            await context.Database.MigrateAsync();
+            // Skip migration check since SQLite database is already created
+            // await context.Database.MigrateAsync();
             
             // Seed data
             await SportsCardSeeder.SeedAsync(context);
@@ -71,6 +74,7 @@ if (app.Environment.IsDevelopment())
         }
     }
 }
+*/
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

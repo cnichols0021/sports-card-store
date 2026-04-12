@@ -35,7 +35,7 @@ public class AppDbContext : DbContext
         // Only used for design-time tools if no other configuration is available
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer();
+            optionsBuilder.UseSqlite("Data Source=SportsCardStore.db");
         }
     }
 

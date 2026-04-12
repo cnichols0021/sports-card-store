@@ -77,7 +77,7 @@ export interface CreateSportsCardRequest {
   isBowmanFirst?: boolean;
   parallelName?: string;
   printRun?: number;
-  gradingCompany?: string;
+  gradingCompany: GradingCompany;
   grade?: number;
   condition?: string;
   price: number;

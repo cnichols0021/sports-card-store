@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiService } from "../../services/apiService";
-import { CreateSportsCardRequest, Category } from "../../types/index";
+import {
+  CreateSportsCardRequest,
+  Category,
+  GradingCompany,
+} from "../../types/index";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { ErrorMessage } from "../../components/ErrorMessage";
 
@@ -24,7 +28,7 @@ export function CardFormPage() {
     isBowmanFirst: false,
     parallelName: "",
     printRun: undefined,
-    gradingCompany: "",
+    gradingCompany: GradingCompany.Raw,
     grade: undefined,
     condition: "Near Mint or Better",
     price: 0,
@@ -60,7 +64,7 @@ export function CardFormPage() {
             isBowmanFirst: card.isBowmanFirst,
             parallelName: card.parallelName || "",
             printRun: card.printRun,
-            gradingCompany: card.gradingCompany || "",
+            gradingCompany: card.gradingCompany || GradingCompany.Raw,
             grade: card.grade,
             condition: card.condition || "Near Mint or Better",
             price: card.price,
@@ -95,7 +99,9 @@ export function CardFormPage() {
             ? value === ""
               ? undefined
               : parseFloat(value)
-            : value,
+            : name === "sport" || name === "gradingCompany"
+              ? parseInt(value)
+              : value,
     }));
   };
 
@@ -399,14 +405,18 @@ export function CardFormPage() {
               >
                 Grading Company
               </label>
-              <input
-                type="text"
+              <select
                 id="gradingCompany"
                 name="gradingCompany"
                 value={formData.gradingCompany}
                 onChange={handleInputChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              />
+              >
+                <option value={GradingCompany.Raw}>Raw (Ungraded)</option>
+                <option value={GradingCompany.PSA}>PSA</option>
+                <option value={GradingCompany.BGS}>BGS (Beckett)</option>
+                <option value={GradingCompany.SGC}>SGC</option>
+              </select>
             </div>
 
             {/* Grade */}
