@@ -242,6 +242,43 @@ localStorage.removeItem('isAdmin')
 
 ---
 
+## Local Development Setup
+
+### Fix LD.1 — CORS Blocking Frontend API Calls
+- **Tool:** Claude (direct GitHub push)
+- **Date:** April 2026
+- **Root Cause:** `Program.cs` CORS policy only allowed `localhost:3000` but Vite dev server runs on `localhost:5173` — all API calls were silently blocked by the browser
+- **Fix:** Expanded `WithOrigins()` to include `5173`, `5174` (Vite fallback), and `3000` ✅
+
+### Fix LD.2 — SQLite Provider Support for Local Dev
+- **Tool:** Copilot (schema) + Claude (provider detection)
+- **Date:** April 2026
+- **Root Cause:** Original setup used Azure SQL with user secrets. Running locally requires a zero-config database that works without Azure credentials.
+- **Fix:**
+  - Added `Microsoft.EntityFrameworkCore.Sqlite` package to Infrastructure.csproj ✅
+  - Added provider auto-detection to `Program.cs`: connection strings matching `Data Source=*.db` use SQLite, everything else uses SqlServer ✅
+  - `appsettings.Development.json` (gitignored) holds `"Data Source=SportsCardStore.db"` — never committed ✅
+
+### Fix LD.3 — EnsureCreated vs MigrateAsync for SQLite
+- **Tool:** Claude (direct GitHub push)
+- **Date:** April 2026
+- **Root Cause:** EF Core migrations were generated against SQL Server and use SQL Server-specific type syntax. Applying them to SQLite triggers `PendingModelChangesWarning` and fails.
+- **Fix:** Split the startup database init by provider:
+  - **SQLite (local):** `EnsureCreatedAsync()` — builds schema directly from the current model, no migrations needed
+  - **SQL Server (Azure):** `MigrateAsync()` — applies pending EF migrations as normal ✅
+- **Note:** User secrets override `appsettings.Development.json` in .NET's config priority order. The Azure SQL connection string set in user secrets during Phase 2 was silently winning over the SQLite string — removed with `dotnet user-secrets remove "ConnectionStrings:DefaultConnection"` ✅
+
+**Local dev startup sequence (confirmed working):**
+```
+1. API detects Data Source=SportsCardStore.db → isSqlite = true
+2. EnsureCreatedAsync() creates SportsCardStore.db and builds schema
+3. SportsCardSeeder runs and populates seed cards
+4. API starts on http://localhost:5281
+5. Vite frontend on http://localhost:5173 connects cleanly
+```
+
+---
+
 ## Phase 8 — AI Agents
 
 ### Prompt 8.2 — Inventory Import Agent Scaffold
@@ -403,6 +440,10 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 | 34 | Hide the native file input and trigger it from a custom button — gives full control over the UI state (spinner, label changes) without the inconsistent browser default | Phase 6 |
 | 35 | **React Router v6: layout wrapper routes must be pathless** — giving an `<Outlet>`-based layout its own `path` breaks all child routes; the path belongs on the guard/parent route only | Phase 7 |
 | 36 | Copilot correctly creates `pages/admin/` subfolder unprompted when the prompt specifies an admin section — folder structure mirrors the architectural intent | Phase 7 |
+| 37 | Vite dev server runs on port 5173, not 3000 — CORS policies written for CRA/Express will silently block all API calls from a Vite frontend | Local Dev |
+| 38 | **User secrets override appsettings.Development.json** — .NET config priority order means a connection string set in user secrets during Azure setup will win over a local SQLite string, causing the wrong provider to be used | Local Dev |
+| 39 | EF Core migrations generated against SQL Server cannot be applied to SQLite — use `EnsureCreatedAsync()` for SQLite local dev and `MigrateAsync()` for SQL Server production; split the init path by provider | Local Dev |
+| 40 | A gitignored `appsettings.Development.json` with a SQLite connection string is the right pattern for zero-config local dev — keeps Azure credentials out of code without requiring any manual setup steps | Local Dev |
 
 ---
 
@@ -424,6 +465,7 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Reviewing fixes before updating the prompt log = log reflects verified state, not claimed state
 - Specifying both client-side and server-side validation requirements in file upload prompts = consistent behavior across the stack
 - Calling out known React Router v6 pitfalls in the prompt (pathless layout routes, Outlet vs children) = Copilot gets routing right on the first try more often
+- Provider auto-detection via connection string pattern = single codebase runs on SQLite locally and SQL Server in production with zero config changes
 
 ---
 
@@ -440,6 +482,7 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Accepting an agent's API integration without verifying it targets the right endpoint — check active vs sold, v1 vs v2
 - Frontend filter types don't automatically wire to API calls — always verify every filter param is appended
 - React Router v6 layout routes: not explicitly calling out the pathless pattern leads to Copilot adding `path` to layout wrappers, breaking nested routing
+- Assuming CORS is wired for the actual dev server port — always verify the origin list matches the framework's default port
 
 ---
 
