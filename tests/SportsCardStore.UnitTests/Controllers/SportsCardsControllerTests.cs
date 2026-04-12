@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SportsCardStore.API.Controllers;
-using SportsCardStore.API.Models;
 using SportsCardStore.Shared.Models;
 using SportsCardStore.Core.Entities;
 using SportsCardStore.Core.Enums;
@@ -36,10 +35,6 @@ public class SportsCardsControllerTests
             _mockLogger.Object);
     }
 
-    /// <summary>
-    /// Verifies that GetAllCards returns 200 OK with properly formatted 
-    /// paged results when the service returns card data
-    /// </summary>
     [Fact]
     public async Task GetAllCards_WhenServiceReturnsData_ShouldReturn200OkWithPagedResults()
     {
@@ -92,23 +87,19 @@ public class SportsCardsControllerTests
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
         okResult!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        
+
         var response = okResult.Value as PagedSportsCardResponse;
         response.Should().NotBeNull();
         response!.Items.Should().HaveCount(1);
         response.TotalCount.Should().Be(1);
         response.Page.Should().Be(1);
         response.PageSize.Should().Be(10);
-        
+
         var firstItem = response.Items.First();
         firstItem.PlayerName.Should().Be("Mike Trout");
         firstItem.Id.Should().Be(1);
     }
 
-    /// <summary>
-    /// Verifies that GetAllCards returns 200 OK with empty results 
-    /// when no cards exist in the system
-    /// </summary>
     [Fact]
     public async Task GetAllCards_WhenNoCardsExist_ShouldReturn200OkWithEmptyResults()
     {
@@ -139,7 +130,7 @@ public class SportsCardsControllerTests
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
         okResult!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        
+
         var response = okResult.Value as PagedSportsCardResponse;
         response.Should().NotBeNull();
         response!.Items.Should().BeEmpty();
@@ -147,10 +138,6 @@ public class SportsCardsControllerTests
         response.TotalPages.Should().Be(0);
     }
 
-    /// <summary>
-    /// Verifies that GetCard returns 200 OK with card data 
-    /// when a card with the specified ID exists
-    /// </summary>
     [Fact]
     public async Task GetCard_WhenCardExists_ShouldReturn200OkWithCardData()
     {
@@ -175,9 +162,7 @@ public class SportsCardsControllerTests
             UpdatedDate = DateTime.UtcNow
         };
 
-        _mockSportsCardService
-            .Setup(s => s.GetByIdAsync(cardId))
-            .ReturnsAsync(sportsCard);
+        _mockSportsCardService.Setup(s => s.GetByIdAsync(cardId)).ReturnsAsync(sportsCard);
 
         // Act
         var result = await _controller.GetCard(cardId);
@@ -186,7 +171,7 @@ public class SportsCardsControllerTests
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
         okResult!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        
+
         var response = okResult.Value as SportsCardResponse;
         response.Should().NotBeNull();
         response!.Id.Should().Be(cardId);
@@ -194,18 +179,12 @@ public class SportsCardsControllerTests
         response.Price.Should().Be(500.00m);
     }
 
-    /// <summary>
-    /// Verifies that GetCard returns 404 NotFound when a card 
-    /// with the specified ID does not exist
-    /// </summary>
     [Fact]
     public async Task GetCard_WhenCardDoesNotExist_ShouldReturn404NotFound()
     {
         // Arrange
         var cardId = 99;
-        _mockSportsCardService
-            .Setup(s => s.GetByIdAsync(cardId))
-            .ReturnsAsync((SportsCard?)null);
+        _mockSportsCardService.Setup(s => s.GetByIdAsync(cardId)).ReturnsAsync((SportsCard?)null);
 
         // Act
         var result = await _controller.GetCard(cardId);
@@ -217,10 +196,6 @@ public class SportsCardsControllerTests
         notFoundResult.Value.Should().Be($"Sports card with ID {cardId} not found");
     }
 
-    /// <summary>
-    /// Verifies that CreateCard returns 201 Created with location header 
-    /// when the request model is valid and card is successfully created
-    /// </summary>
     [Fact]
     public async Task CreateCard_WhenModelIsValid_ShouldReturn201CreatedWithLocationHeader()
     {
@@ -260,9 +235,7 @@ public class SportsCardsControllerTests
             UpdatedDate = DateTime.UtcNow
         };
 
-        _mockSportsCardService
-            .Setup(s => s.CreateAsync(It.IsAny<SportsCard>()))
-            .ReturnsAsync(createdCard);
+        _mockSportsCardService.Setup(s => s.CreateAsync(It.IsAny<SportsCard>())).ReturnsAsync(createdCard);
 
         // Act
         var result = await _controller.CreateCard(createRequest);
@@ -273,24 +246,20 @@ public class SportsCardsControllerTests
         createdResult!.StatusCode.Should().Be(StatusCodes.Status201Created);
         createdResult.ActionName.Should().Be(nameof(_controller.GetCard));
         createdResult.RouteValues!["id"].Should().Be(10);
-        
+
         var response = createdResult.Value as SportsCardResponse;
         response.Should().NotBeNull();
         response!.Id.Should().Be(10);
         response.PlayerName.Should().Be("Ronald Acuña Jr.");
     }
 
-    /// <summary>
-    /// Verifies that CreateCard returns 400 BadRequest when the 
-    /// model state is invalid (validation errors exist)
-    /// </summary>
     [Fact]
     public async Task CreateCard_WhenModelStateIsInvalid_ShouldReturn400BadRequest()
     {
         // Arrange
         var createRequest = new CreateSportsCardRequest
         {
-            PlayerName = "", // Invalid: Required field is empty
+            PlayerName = "",
             Year = 2023,
             Brand = "Topps"
         };
@@ -307,10 +276,6 @@ public class SportsCardsControllerTests
         badRequestResult.Value.Should().BeOfType<SerializableError>();
     }
 
-    /// <summary>
-    /// Verifies that UpdateCard returns 200 OK with updated card data 
-    /// when the card exists and the model is valid
-    /// </summary>
     [Fact]
     public async Task UpdateCard_WhenCardExistsAndModelIsValid_ShouldReturn200Ok()
     {
@@ -374,7 +339,7 @@ public class SportsCardsControllerTests
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
         okResult!.StatusCode.Should().Be(StatusCodes.Status200OK);
-        
+
         var response = okResult.Value as SportsCardResponse;
         response.Should().NotBeNull();
         response!.Id.Should().Be(cardId);
@@ -383,10 +348,6 @@ public class SportsCardsControllerTests
         response.Price.Should().Be(750.00m);
     }
 
-    /// <summary>
-    /// Verifies that UpdateCard returns 404 NotFound when the 
-    /// card with the specified ID does not exist
-    /// </summary>
     [Fact]
     public async Task UpdateCard_WhenCardDoesNotExist_ShouldReturn404NotFound()
     {
@@ -418,10 +379,6 @@ public class SportsCardsControllerTests
         notFoundResult.Value.Should().Be($"Sports card with ID {cardId} not found");
     }
 
-    /// <summary>
-    /// Verifies that DeleteCard returns 204 NoContent when the 
-    /// card exists and is successfully deleted
-    /// </summary>
     [Fact]
     public async Task DeleteCard_WhenCardExists_ShouldReturn204NoContent()
     {
@@ -450,15 +407,11 @@ public class SportsCardsControllerTests
         result.Should().BeOfType<NoContentResult>();
         var noContentResult = result as NoContentResult;
         noContentResult!.StatusCode.Should().Be(StatusCodes.Status204NoContent);
-        
+
         _mockSportsCardService.Verify(s => s.GetByIdAsync(cardId), Times.Once);
         _mockSportsCardService.Verify(s => s.DeleteAsync(cardId), Times.Once);
     }
 
-    /// <summary>
-    /// Verifies that DeleteCard returns 404 NotFound when the 
-    /// card with the specified ID does not exist
-    /// </summary>
     [Fact]
     public async Task DeleteCard_WhenCardDoesNotExist_ShouldReturn404NotFound()
     {
@@ -474,15 +427,11 @@ public class SportsCardsControllerTests
         var notFoundResult = result as NotFoundObjectResult;
         notFoundResult!.StatusCode.Should().Be(StatusCodes.Status404NotFound);
         notFoundResult.Value.Should().Be($"Sports card with ID {cardId} not found");
-        
+
         _mockSportsCardService.Verify(s => s.GetByIdAsync(cardId), Times.Once);
         _mockSportsCardService.Verify(s => s.DeleteAsync(It.IsAny<int>()), Times.Never);
     }
 
-    /// <summary>
-    /// Verifies that controller handles service exceptions by 
-    /// returning 500 Internal Server Error for GetAllCards
-    /// </summary>
     [Fact]
     public async Task GetAllCards_WhenServiceThrowsException_ShouldReturn500InternalServerError()
     {
@@ -505,10 +454,6 @@ public class SportsCardsControllerTests
         objectResult.Value.Should().Be("An error occurred while retrieving sports cards");
     }
 
-    /// <summary>
-    /// Verifies that controller properly validates UpdateCard model state
-    /// and returns 400 BadRequest when validation fails
-    /// </summary>
     [Fact]
     public async Task UpdateCard_WhenModelStateIsInvalid_ShouldReturn400BadRequest()
     {
