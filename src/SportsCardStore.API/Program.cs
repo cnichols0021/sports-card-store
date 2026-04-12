@@ -10,10 +10,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 // Add Entity Framework
+// Auto-detect provider from the connection string:
+//   - SQLite  : connection string starts with "Data Source=" and ends with ".db" (local dev)
+//   - SqlServer: everything else (Azure / production)
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlServer(connectionString);
+
+    if (connectionString != null &&
+        connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase) &&
+        connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(connectionString);
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
 });
 
 // Add Blob Storage Service
@@ -61,10 +74,10 @@ if (app.Environment.IsDevelopment())
         try
         {
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            
+
             // Apply pending migrations
             await context.Database.MigrateAsync();
-            
+
             // Seed data
             await SportsCardSeeder.SeedAsync(context);
         }
