@@ -2,6 +2,7 @@ import {
   PagedSportsCardResponse,
   SportsCardResponse,
   CardFilters,
+  CreateSportsCardRequest,
 } from "../types";
 
 const API_BASE_URL =
@@ -36,10 +37,7 @@ export class ApiService {
         );
       }
       if (filters.isAutograph !== undefined) {
-        url.searchParams.append(
-          "isAutograph",
-          filters.isAutograph.toString(),
-        );
+        url.searchParams.append("isAutograph", filters.isAutograph.toString());
       }
       if (filters.minPrice !== undefined) {
         url.searchParams.append("minPrice", filters.minPrice.toString());
@@ -81,6 +79,85 @@ export class ApiService {
     }
 
     return await response.json();
+  }
+
+  async createSportsCard(
+    card: CreateSportsCardRequest,
+  ): Promise<SportsCardResponse> {
+    const response = await fetch(`${this.baseUrl}/api/sportscards`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(card),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create sports card: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async updateSportsCard(
+    id: number,
+    card: CreateSportsCardRequest,
+  ): Promise<SportsCardResponse> {
+    const response = await fetch(`${this.baseUrl}/api/sportscards/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(card),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update sports card: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async deleteSportsCard(id: number): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/sportscards/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete sports card: ${response.statusText}`);
+    }
+  }
+
+  async uploadCardImage(id: number, file: File): Promise<SportsCardResponse> {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(
+      `${this.baseUrl}/api/sportscards/${id}/image`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to upload image: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async deleteCardImage(id: number): Promise<void> {
+    const response = await fetch(
+      `${this.baseUrl}/api/sportscards/${id}/image`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete image: ${response.statusText}`);
+    }
   }
 }
 

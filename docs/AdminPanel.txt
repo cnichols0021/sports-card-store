@@ -1,0 +1,93 @@
+We are building Phase 7 of the Sports Card Store project: the Admin Panel.
+
+## Project Context
+- ASP.NET Core 10 Clean Architecture backend (API / Core / Infrastructure)
+- React 18 + TypeScript + Tailwind CSS frontend in `src/SportsCardStore.Web/src/`
+- Existing components: CardItem, CardFilters, Pagination, ImageUpload, LoadingSpinner, ErrorMessage
+- Existing pages: CardListPage, CardDetailPage
+- Existing apiService: `src/SportsCardStore.Web/src/services/apiService.ts`
+- Existing types: `src/SportsCardStore.Web/src/types/index.ts`
+- API base URL comes from `import.meta.env.VITE_API_BASE_URL`
+
+## What to Build
+
+### 1. Admin Route Guard (`src/SportsCardStore.Web/src/components/AdminRoute.tsx`)
+- Check for `localStorage.getItem('isAdmin') === 'true'`
+- If not admin, redirect to `/` using `useNavigate`
+- If admin, render `<Outlet />`
+- Add a comment: `// TODO: Replace with JWT role check when auth is implemented`
+
+### 2. Admin Layout (`src/SportsCardStore.Web/src/components/AdminLayout.tsx`)
+- Top nav bar with "Sports Card Store — Admin" title
+- Nav links: Dashboard, Manage Cards
+- "Exit Admin" link that navigates to `/`
+- Uses `<Outlet />` for nested routes
+
+### 3. Admin Dashboard Page (`src/SportsCardStore.Web/src/pages/admin/AdminDashboardPage.tsx`)
+- On load, fetch all cards (pageSize=1000, isAvailable=undefined to get all) from `GET /api/sportscards`
+- Display 4 stat cards:
+  - Total Cards (count of all records)
+  - Available (isAvailable === true)
+  - Unavailable (isAvailable === false)
+  - Missing Images (imageUrl is null or empty)
+- Each stat card: large number, label, subtle background color (use Tailwind)
+- LoadingSpinner while fetching, ErrorMessage on failure
+
+### 4. Manage Cards Page (`src/SportsCardStore.Web/src/pages/admin/ManageCardsPage.tsx`)
+- Fetch all cards with pagination (default page=1, pageSize=20)
+- Render a table with columns: Player, Year, Brand, Set, Condition, Price, Available, Image, Actions
+- Image column: show a small thumbnail if imageUrl exists, otherwise a gray placeholder
+- Available column: green "Yes" / red "No" badge
+- Actions column per row:
+  - "Edit" button — opens an inline edit form or navigates to an edit page (inline preferred)
+  - "Delete" button — calls `DELETE /api/sportscards/{id}`, confirms with `window.confirm` first, refreshes list
+  - ImageUpload component (reuse existing) — wired to the card's id
+- Pagination controls at the bottom using the existing Pagination component
+- "Add New Card" button at top right — opens a modal or navigates to a create page
+
+### 5. Create/Edit Card Form (`src/SportsCardStore.Web/src/pages/admin/CardFormPage.tsx`)
+- Single form used for both create (`/admin/cards/new`) and edit (`/admin/cards/:id/edit`)
+- On edit route: fetch card by id, pre-populate all fields
+- Fields (match the CreateSportsCardRequest DTO exactly):
+  - PlayerName (text, required)
+  - Year (number, required)
+  - Brand (text, required)
+  - SetName (text, required)
+  - CardNumber (text, required)
+  - Sport (select: Baseball=0, Basketball=1, Football=2, Hockey=3, Soccer=4, Other=5)
+  - Team (text, required)
+  - IsRookie, IsAutograph, IsRelic, IsBowmanFirst (checkboxes)
+  - ParallelName (text, optional)
+  - PrintRun (number, optional)
+  - GradingCompany (text, optional)
+  - Grade (decimal, optional)
+  - Condition (text, default "Near Mint or Better")
+  - Price (decimal, required)
+  - Quantity (number, required, default 1)
+  - Description (textarea, optional)
+  - IsAvailable (checkbox, default true)
+- On submit: POST for create, PUT for edit
+- Show success message and navigate back to `/admin/cards` on success
+- Cancel button navigates back without saving
+
+### 6. Wire up routes in `App.tsx`
+Add these routes:
+/admin             → AdminRoute (guard) wrapping AdminLayout
+/admin             → AdminDashboardPage (index)
+/admin/cards       → ManageCardsPage
+/admin/cards/new   → CardFormPage (create mode)
+/admin/cards/:id/edit → CardFormPage (edit mode)
+
+Also add a small "Admin" link in the main nav (or footer) that only shows when `localStorage.getItem('isAdmin') === 'true'`.
+
+### 7. Add `uploadCardImage` and `deleteCardImage` to `apiService.ts` if not already present
+- `uploadCardImage(id: number, file: File): Promise<SportsCardResponse>` — multipart POST to `/api/sportscards/{id}/image`
+- `deleteCardImage(id: number): Promise<void>` — DELETE to `/api/sportscards/{id}/image`
+
+## Requirements
+- Use Tailwind utility classes only — no custom CSS files
+- All API calls go through `apiService.ts` — no inline fetch calls in components
+- TypeScript strict — no `any` types
+- Reuse LoadingSpinner and ErrorMessage components where appropriate
+- No authentication library needed — the `isAdmin` localStorage flag is the only gate for now
+- Push all files to the repository when done

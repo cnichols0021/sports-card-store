@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { PagedSportsCardResponse, CardFilters } from "../types";
 import { apiService } from "../services/apiService";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -74,12 +75,24 @@ export const CardListPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Sports Card Store
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Discover and collect your favorite sports cards
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Sports Card Store
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Discover and collect your favorite sports cards
+              </p>
+            </div>
+            {localStorage.getItem("isAdmin") === "true" && (
+              <Link
+                to="/admin"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200"
+              >
+                Admin
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Filters */}

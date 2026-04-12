@@ -1,11 +1,18 @@
 interface ErrorMessageProps {
   message: string;
   onRetry?: () => void;
+  className?: string;
 }
 
-export const ErrorMessage = ({ message, onRetry }: ErrorMessageProps) => {
+export const ErrorMessage = ({
+  message,
+  onRetry,
+  className = "",
+}: ErrorMessageProps) => {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-md p-4">
+    <div
+      className={`bg-red-50 border border-red-200 rounded-md p-4 ${className}`}
+    >
       <div className="flex items-center">
         <div className="flex-shrink-0">
           <svg

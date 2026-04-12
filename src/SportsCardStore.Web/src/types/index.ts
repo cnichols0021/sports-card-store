@@ -62,3 +62,26 @@ export interface CardFilters {
   page?: number;
   pageSize?: number;
 }
+
+export interface CreateSportsCardRequest {
+  playerName: string;
+  year: number;
+  brand: string;
+  setName: string;
+  cardNumber: string;
+  sport: Category;
+  team: string;
+  isRookie?: boolean;
+  isAutograph?: boolean;
+  isRelic?: boolean;
+  isBowmanFirst?: boolean;
+  parallelName?: string;
+  printRun?: number;
+  gradingCompany?: string;
+  grade?: number;
+  condition?: string;
+  price: number;
+  quantity: number;
+  description?: string;
+  isAvailable?: boolean;
+}
