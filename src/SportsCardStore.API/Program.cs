@@ -9,12 +9,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-// Add Entity Framework with explicit SQLite connection string
+// Add Entity Framework
+// Auto-detect provider from the connection string:
+//   - SQLite  : connection string starts with "Data Source=" and ends with ".db" (local dev)
+//   - SqlServer: everything else (Azure / production)
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    // Use explicit SQLite connection string to avoid conflicts
-    var connectionString = "Data Source=SportsCardStore.db";
-    options.UseSqlite(connectionString);
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (connectionString != null &&
+        connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase) &&
+        connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(connectionString);
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
 });
 
 // Add Blob Storage Service
@@ -37,7 +49,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // React dev server
+        policy.WithOrigins(
+                "http://localhost:5173",  // Vite dev server (default)
+                "http://localhost:5174",  // Vite fallback port
+                "http://localhost:3000"   // CRA / alternative dev servers
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -50,8 +66,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Disable seeding temporarily until connection string issue is resolved
-/*
 // Seed database in development environment
 if (app.Environment.IsDevelopment())
 {
@@ -60,10 +74,10 @@ if (app.Environment.IsDevelopment())
         try
         {
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            
-            // Skip migration check since SQLite database is already created
-            // await context.Database.MigrateAsync();
-            
+
+            // Apply pending migrations
+            await context.Database.MigrateAsync();
+
             // Seed data
             await SportsCardSeeder.SeedAsync(context);
         }
@@ -74,7 +88,6 @@ if (app.Environment.IsDevelopment())
         }
     }
 }
-*/
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
