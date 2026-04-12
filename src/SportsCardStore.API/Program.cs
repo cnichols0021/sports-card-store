@@ -45,9 +45,11 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
-                "http://localhost:5173",  // Vite dev server (default)
-                "http://localhost:5174",  // Vite fallback port
-                "http://localhost:3000"   // CRA / alternative dev servers
+                "http://localhost:3000",  // CRA default
+                "http://localhost:3001",  // CRA / Vite fallback
+                "http://localhost:3002",  // CRA / Vite fallback
+                "http://localhost:5173",  // Vite default
+                "http://localhost:5174"   // Vite fallback
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
