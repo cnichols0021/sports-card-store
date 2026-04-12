@@ -53,6 +53,8 @@ stages:
               projects: "src/SportsCardStore.API/*.csproj"
               arguments: "--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api"
               publishWebProjects: false
+              zipAfterPublish: true
+              modifyOutputPath: false
 
           - task: PublishBuildArtifacts@1
             displayName: "Publish build artifacts"
@@ -107,10 +109,6 @@ stages:
                     custom: "tool"
                     arguments: "install --global dotnet-ef"
 
-                # Set ASPNETCORE_ENVIRONMENT=Production and inject the SQL Server
-                # connection string so Program.cs registers UseSqlServer (not SQLite)
-                # when EF tools spin up the app to discover the DbContext.
-                # Without this, the build agent defaults to Development and picks SQLite.
                 - task: DotNetCoreCLI@2
                   displayName: "Run EF Core Database Migrations"
                   inputs:
@@ -121,6 +119,8 @@ stages:
                     ASPNETCORE_ENVIRONMENT: Production
                     ConnectionStrings__DefaultConnection: $(AzureConnectionString)
 
+                # Point directly at the zip file — when package is a directory the task
+                # may not find the zip reliably on Linux agents
                 - task: AzureWebApp@1
                   displayName: "Deploy to Azure App Service"
                   inputs:
@@ -128,4 +128,4 @@ stages:
                     appType: "webAppLinux"
                     appName: "sportscard-api-cn"
                     resourceGroupName: "sports-card-store-rg"
-                    package: "$(System.ArtifactsDirectory)/drop/api"
+                    package: "$(System.ArtifactsDirectory)/drop/api/*.zip"
