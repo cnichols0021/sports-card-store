@@ -217,7 +217,28 @@ npm run dev
 
 ## Phase 7 — Admin Panel
 
-*(Prompts to be added as this phase begins)*
+### Prompt 7.1 — Admin Panel Scaffold
+- **Tool:** GitHub Copilot Chat + Claude (fix)
+- **Date:** April 2026
+- **Output Rating:** ⚠️ Needed Tweaking
+- **Notes:**
+  - `AdminRoute.tsx` — `localStorage.getItem('isAdmin') === 'true'` guard, redirects to `/` if not admin, `<Outlet />` pattern, TODO comment for JWT swap ✅
+  - `AdminLayout.tsx` — top nav bar with Dashboard + Manage Cards links, "Exit Admin" button, `<Outlet />` for page content ✅
+  - `AdminDashboardPage.tsx` — 4 stat cards: Total, Available, Unavailable, Missing Images. Fetches all cards (pageSize=1000) on load ✅
+  - `ManageCardsPage.tsx` — paginated table with thumbnail, available badge, Edit/Delete/ImageUpload actions per row ✅
+  - `CardFormPage.tsx` — single form for create and edit modes, pre-populates fields from API on edit route, all 21 fields present ✅
+  - `apiService.ts` updated: `createSportsCard`, `updateSportsCard`, `deleteSportsCard`, `uploadCardImage` (FormData), `deleteCardImage` all wired correctly ✅
+  - All admin pages created in `pages/admin/` subfolder ✅
+  - **Fix — `App.tsx` pathless layout route:** Copilot gave `AdminLayout` route `path="/admin"` — the same absolute path as the parent `AdminRoute`. In React Router v6, layout wrapper routes must be **pathless** (`<Route element={<AdminLayout />}>`). With a path set, child routes like `/admin/cards` would not render inside the layout shell. Claude removed the path attribute and added an explanatory comment ✅
+
+**To enable admin access locally:**
+```js
+// Run in browser console
+localStorage.setItem('isAdmin', 'true')
+// Then navigate to /admin
+// To revoke:
+localStorage.removeItem('isAdmin')
+```
 
 ---
 
@@ -380,6 +401,8 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 | 32 | Mirror server-side validation on the client — `ImageUpload.tsx` and the API controller enforce the same file type and size limits, preventing wasted round trips | Phase 6 |
 | 33 | Delete the old blob before uploading a replacement — without this, every image update leaves an orphaned file in Azure Blob Storage that accrues storage cost | Phase 6 |
 | 34 | Hide the native file input and trigger it from a custom button — gives full control over the UI state (spinner, label changes) without the inconsistent browser default | Phase 6 |
+| 35 | **React Router v6: layout wrapper routes must be pathless** — giving an `<Outlet>`-based layout its own `path` breaks all child routes; the path belongs on the guard/parent route only | Phase 7 |
+| 36 | Copilot correctly creates `pages/admin/` subfolder unprompted when the prompt specifies an admin section — folder structure mirrors the architectural intent | Phase 7 |
 
 ---
 
@@ -400,6 +423,7 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Designing a pricing agent with an `IPricingSource` interface = swap data sources without rewriting logic
 - Reviewing fixes before updating the prompt log = log reflects verified state, not claimed state
 - Specifying both client-side and server-side validation requirements in file upload prompts = consistent behavior across the stack
+- Calling out known React Router v6 pitfalls in the prompt (pathless layout routes, Outlet vs children) = Copilot gets routing right on the first try more often
 
 ---
 
@@ -415,6 +439,7 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Agent prompts that don't specify where the return type model should live — Copilot may reference a class it never creates
 - Accepting an agent's API integration without verifying it targets the right endpoint — check active vs sold, v1 vs v2
 - Frontend filter types don't automatically wire to API calls — always verify every filter param is appended
+- React Router v6 layout routes: not explicitly calling out the pathless pattern leads to Copilot adding `path` to layout wrappers, breaking nested routing
 
 ---
 
