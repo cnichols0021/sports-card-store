@@ -111,7 +111,7 @@ stages:
                   displayName: "Deploy to Azure App Service"
                   inputs:
                     azureSubscription: "$(AzureServiceConnection)"
-                    appType: "webApp"
-                    appName: "sportscard-api"
+                    appType: "webAppLinux"
+                    appName: "sportscard-api-cn"
                     resourceGroupName: "sports-card-store-rg"
                     package: "$(System.ArtifactsDirectory)/drop/api"
