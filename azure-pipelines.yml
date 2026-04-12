@@ -8,7 +8,7 @@ trigger:
 variables:
   buildConfiguration: "Release"
   dotNetVersion: "10.x"
-  
+
 stages:
   - stage: Build
     displayName: "Build and Test"
@@ -75,8 +75,7 @@ stages:
           runOnce:
             deploy:
               steps:
-                # Checkout source is required so dotnet-ef can find the project files
-                # for running database migrations against Azure SQL
+                # Checkout source so dotnet-ef can find the project files
                 - checkout: self
 
                 - task: DownloadBuildArtifacts@0
@@ -92,6 +91,14 @@ stages:
                   inputs:
                     packageType: "sdk"
                     version: $(dotNetVersion)
+
+                # Restore is required in the deploy stage — checkout: self gives us
+                # source files but not the obj/project.assets.json that dotnet-ef needs
+                - task: DotNetCoreCLI@2
+                  displayName: "Restore packages for migrations"
+                  inputs:
+                    command: "restore"
+                    projects: "src/SportsCardStore.Infrastructure/SportsCardStore.Infrastructure.csproj"
 
                 - task: DotNetCoreCLI@2
                   displayName: "Install EF Core tools"
