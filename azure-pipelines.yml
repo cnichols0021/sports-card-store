@@ -92,13 +92,13 @@ stages:
                     packageType: "sdk"
                     version: $(dotNetVersion)
 
-                # Restore is required in the deploy stage — checkout: self gives us
-                # source files but not the obj/project.assets.json that dotnet-ef needs
+                # Restore the full solution — dotnet-ef needs assets files for both
+                # the Infrastructure project AND the API startup project
                 - task: DotNetCoreCLI@2
                   displayName: "Restore packages for migrations"
                   inputs:
                     command: "restore"
-                    projects: "src/SportsCardStore.Infrastructure/SportsCardStore.Infrastructure.csproj"
+                    projects: "**/*.sln"
 
                 - task: DotNetCoreCLI@2
                   displayName: "Install EF Core tools"
