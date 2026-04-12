@@ -164,7 +164,7 @@
   - Both pages (`CardListPage`, `CardDetailPage`) on correct routes ✅
   - `LoadingSpinner`, `ErrorMessage`, `CardItem`, `CardFilters`, `Pagination` components all created ✅
   - **Fix 1 — `isAutograph` filter missing from API call:** Defined in `CardFilters` type but never appended to URL params. Claude added the missing `searchParams.append` block ✅
-  - **Fix 2 — Build artifacts committed:** `tsconfig.app.tsbuildinfo` and `tsconfig.node.tsbuildinfo` were committed to the repo. Claude added `*.tsbuildinfo` to `.gitignore`. Run `git rm --cached src/SportsCardStore.Web/tsconfig.app.tsbuildinfo src/SportsCardStore.Web/tsconfig.node.tsbuildinfo` locally to stop tracking them ✅
+  - **Fix 2 — Build artifacts committed:** `tsconfig.app.tsbuildinfo` and `tsconfig.node.tsbuildinfo` were committed to the repo. Claude added `*.tsbuildinfo` to `.gitignore` ✅
 
 **To run locally:**
 ```
@@ -229,15 +229,12 @@ npm run dev
   - `CardFormPage.tsx` — single form for create and edit modes, pre-populates fields from API on edit route, all 21 fields present ✅
   - `apiService.ts` updated: `createSportsCard`, `updateSportsCard`, `deleteSportsCard`, `uploadCardImage` (FormData), `deleteCardImage` all wired correctly ✅
   - All admin pages created in `pages/admin/` subfolder ✅
-  - **Fix — `App.tsx` pathless layout route:** Copilot gave `AdminLayout` route `path="/admin"` — the same absolute path as the parent `AdminRoute`. In React Router v6, layout wrapper routes must be **pathless** (`<Route element={<AdminLayout />}>`). With a path set, child routes like `/admin/cards` would not render inside the layout shell. Claude removed the path attribute and added an explanatory comment ✅
+  - **Fix — `App.tsx` pathless layout route:** Copilot gave `AdminLayout` route `path="/admin"` — in React Router v6, layout wrapper routes must be pathless. Claude removed the path attribute ✅
 
 **To enable admin access locally:**
 ```js
-// Run in browser console
-localStorage.setItem('isAdmin', 'true')
-// Then navigate to /admin
-// To revoke:
-localStorage.removeItem('isAdmin')
+localStorage.setItem('isAdmin', 'true')  // run in browser console
+localStorage.removeItem('isAdmin')        // to revoke
 ```
 
 ---
@@ -245,37 +242,71 @@ localStorage.removeItem('isAdmin')
 ## Local Development Setup
 
 ### Fix LD.1 — CORS Blocking Frontend API Calls
-- **Tool:** Claude (direct GitHub push)
-- **Date:** April 2026
-- **Root Cause:** `Program.cs` CORS policy only allowed `localhost:3000` but Vite dev server runs on `localhost:5173` — all API calls were silently blocked by the browser
-- **Fix:** Expanded `WithOrigins()` to include `5173`, `5174` (Vite fallback), and `3000` ✅
+- **Root Cause:** `Program.cs` CORS policy only allowed `localhost:3000` but Vite dev server runs on `localhost:5173`
+- **Fix:** Expanded `WithOrigins()` to include `5173`, `5174` (Vite fallback), `3000`, `3001`, `3002` ✅
 
 ### Fix LD.2 — SQLite Provider Support for Local Dev
-- **Tool:** Copilot (schema) + Claude (provider detection)
-- **Date:** April 2026
-- **Root Cause:** Original setup used Azure SQL with user secrets. Running locally requires a zero-config database that works without Azure credentials.
-- **Fix:**
-  - Added `Microsoft.EntityFrameworkCore.Sqlite` package to Infrastructure.csproj ✅
-  - Added provider auto-detection to `Program.cs`: connection strings matching `Data Source=*.db` use SQLite, everything else uses SqlServer ✅
-  - `appsettings.Development.json` (gitignored) holds `"Data Source=SportsCardStore.db"` — never committed ✅
+- **Root Cause:** Original setup used Azure SQL with user secrets — no zero-config local database
+- **Fix:** Added SQLite package + provider auto-detection in `Program.cs` based on connection string pattern ✅
+- `appsettings.Development.json` (gitignored): `"Data Source=SportsCardStore.db"`
 
 ### Fix LD.3 — EnsureCreated vs MigrateAsync for SQLite
-- **Tool:** Claude (direct GitHub push)
-- **Date:** April 2026
-- **Root Cause:** EF Core migrations were generated against SQL Server and use SQL Server-specific type syntax. Applying them to SQLite triggers `PendingModelChangesWarning` and fails.
-- **Fix:** Split the startup database init by provider:
-  - **SQLite (local):** `EnsureCreatedAsync()` — builds schema directly from the current model, no migrations needed
-  - **SQL Server (Azure):** `MigrateAsync()` — applies pending EF migrations as normal ✅
-- **Note:** User secrets override `appsettings.Development.json` in .NET's config priority order. The Azure SQL connection string set in user secrets during Phase 2 was silently winning over the SQLite string — removed with `dotnet user-secrets remove "ConnectionStrings:DefaultConnection"` ✅
+- **Root Cause:** EF Core migrations generated against SQL Server use SQL Server-specific syntax — fail on SQLite
+- **Fix:** `EnsureCreatedAsync()` for SQLite local dev; `MigrateAsync()` for SQL Server production ✅
+- **Note:** User secrets override `appsettings.Development.json` — removed old Azure SQL entry from secrets
 
-**Local dev startup sequence (confirmed working):**
-```
-1. API detects Data Source=SportsCardStore.db → isSqlite = true
-2. EnsureCreatedAsync() creates SportsCardStore.db and builds schema
-3. SportsCardSeeder runs and populates seed cards
-4. API starts on http://localhost:5281
-5. Vite frontend on http://localhost:5173 connects cleanly
-```
+---
+
+## Phase 9 — Azure Deployment
+
+### Prompt 9.1 — Azure Deployment Setup
+- **Tool:** GitHub Copilot Chat + Claude (many fixes)
+- **Date:** April 2026
+- **Output Rating:** ⚠️ Needed Tweaking (significant Azure CLI and pipeline iteration)
+
+#### Azure Resources Provisioned
+- **App Service:** `sportscard-api-cn` (Linux, Basic B1, Central US)
+  - URL: `https://sportscard-api-cn-avegd9h8aegsfscm.centralus-01.azurewebsites.net`
+  - Startup command: `dotnet SportsCardStore.API.dll`
+  - Port: `ASPNETCORE_URLS=http://+:8080`
+- **Static Web App:** `sportscard-web`
+  - URL: `https://orange-ground-0fbae530f.7.azurestaticapps.net`
+- **SQL Server:** `sportscard-server-new.database.windows.net` / DB: `SportscardDb`
+- **Blob Storage:** `sportscardstore` / Container: `card-images`
+
+#### GitHub Actions Frontend Workflow
+- `.github/workflows/deploy-frontend.yml` — builds React with `VITE_API_BASE_URL` baked in, deploys to Static Web App
+- Secret required: `AZURE_STATIC_WEB_APPS_API_TOKEN` ✅ added to GitHub Secrets
+
+#### Azure DevOps Pipeline
+- `azure-pipelines.yml` — Build → Test → EF Migrations → Deploy to App Service
+- Pipeline variables: `AzureServiceConnection`, `AzureConnectionString` (secret)
+- Key fixes applied during iteration:
+  - Added `checkout: self` in deploy stage so `dotnet-ef` can find project files
+  - Added `dotnet restore` in deploy stage before EF migration (assets file missing)
+  - Added `ASPNETCORE_ENVIRONMENT=Production` + `ConnectionStrings__DefaultConnection` env vars to migration step so EF selects SQL Server not SQLite
+  - Added SQL Server firewall rule: "Allow Azure services and resources to access this server"
+  - Rewrote all 3 migration files (`.cs`, `.Designer.cs`, `ModelSnapshot.cs`) from SQLite types to SQL Server types (`nvarchar`, `int`, `bit`, `datetime2`, `GETUTCDATE()`)
+  - Added `ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))` to AppDbContext
+  - Added `modifyOutputPath: false` + `*.zip` glob to pipeline publish/deploy tasks
+  - Set startup command `dotnet SportsCardStore.API.dll` in portal Stack settings
+  - Added `ASPNETCORE_URLS=http://+:8080` app setting (App Service expects port 8080)
+  - Disabled `UseHttpsRedirection()` in production — Azure App Service handles SSL at the front door
+
+#### Status at end of session (April 12, 2026)
+- API deployed and files confirmed in `/home/site/wwwroot/` via SSH ✅
+- Database connected and migrations confirmed up to date via SSH ✅
+- App starts correctly when run manually via SSH ✅
+- **Remaining:** Latest pipeline deploy with HTTPS fix needs to complete, then portal Restart to go fully live
+- Frontend GitHub Actions workflow not yet triggered — needs manual run or frontend file change
+
+#### Next session checklist
+1. Confirm latest pipeline run completed (Build ✅ + Deploy ✅)
+2. Portal → App Services → sportscard-api-cn → Restart
+3. Test: `https://sportscard-api-cn-avegd9h8aegsfscm.centralus-01.azurewebsites.net/api/sportscards`
+4. Trigger frontend deploy: GitHub Actions → deploy-frontend.yml → Run workflow
+5. Update `deploy-azure-phase9.ps1` `$appServiceName` to `sportscard-api-cn` (already done in repo)
+6. Update `deploy-frontend.yml` VITE_API_BASE_URL to the full azurewebsites.net URL (needs GitHub web editor — same issue as before with `${{` syntax)
 
 ---
 
@@ -294,10 +325,10 @@ localStorage.removeItem('isAdmin')
   - DTOs correctly moved to Shared project unprompted — strong architectural decision ✅
 
 ### Prompt 8.2.1 — Add Entity Fields + Migration
-- **Output Rating:** ✅ Great — SetName, IsRookie, IsAutograph, IsRelic added. Migration `20260409113542_AddInventoryFields` applied ✅
+- **Output Rating:** ✅ Great — SetName, IsRookie, IsAutograph, IsRelic added ✅
 
 ### Prompt 8.2.2 — Add IsBowmanFirst Field
-- **Output Rating:** ✅ Great — Added to entity, DTOs, service filter, controller param. Migration `20260409114438_AddIsBowmanFirstField` applied ✅
+- **Output Rating:** ✅ Great — Added to entity, DTOs, service filter, controller param ✅
 
 ### Prompt 8.2.3 — Fix InventoryImportAgent IsBowmanFirst Mapping
 - **Tool:** Claude (direct GitHub push)
@@ -305,15 +336,44 @@ localStorage.removeItem('isAdmin')
 
 ### Prompt 8.2.4 — Fix Controller CreateCard/UpdateCard Missing Field Mappings
 - **Tool:** Claude (direct GitHub push)
-- **Output Rating:** ✅ Great — All new fields mapped. Claude added `MapToResponse()` helper for consistent responses ✅
+- **Output Rating:** ✅ Great — All new fields mapped. Claude added `MapToResponse()` helper ✅
 
 ### Prompt 8.2.5 — Add Parallel Fields (ParallelName + PrintRun)
 - **Tool:** Claude (direct GitHub push)
-- **Output Rating:** ✅ Great — Added across all 6 layers in one commit. Migration `20260409204603_AddParallelFields` applied ✅
+- **Output Rating:** ✅ Great — Added across all 6 layers in one commit ✅
 
 ### Prompt 8.2.6 — Default Condition to "Near Mint or Better"
 - **Tool:** Claude (direct GitHub push)
-- **Output Rating:** ✅ Great — `DefaultCondition` constant added to InventoryImportAgent. Also applied by Claude when parsing voice-dictated card data ✅
+- **Output Rating:** ✅ Great — `DefaultCondition` constant added to InventoryImportAgent ✅
+
+### Prompt 8.1 — Card Listing Agent
+- **Tool:** GitHub Copilot Chat + Claude (fixes)
+- **Output Rating:** ⚠️ Needed Tweaking
+- **Notes:**
+  - Created `src/CardListingAgent/` with correct Anthropic API headers ✅
+  - Fix: `CardListing` model missing — Claude added it to Shared ✅
+  - Fix: Outdated model string → `claude-sonnet-4-6` as named constant ✅
+  - Fix: Broken DI wiring — simplified to `new HttpClient()` ✅
+
+**To run:**
+```
+set ANTHROPIC_API_KEY=your-key-here
+dotnet run --project src/CardListingAgent "2025 Bowman Draft Dean Curley BDC-129 Cleveland Guardians Raw Near Mint Bowman First"
+```
+
+### Prompt 8.3 — Price Research Agent
+- **Tool:** GitHub Copilot Chat + Copilot (fixes)
+- **Output Rating:** ⚠️ Needed Tweaking
+- **Notes:**
+  - `IPricingSource` interface, `EbayPricingSource`, orchestrator ✅
+  - Fix: Browse API → Finding API with `findCompletedItems` + `SoldItemsOnly=true` ✅
+  - Fix: Keyword exclusion filter removed "auto"/"jersey" — legitimate card terms ✅
+
+**To run:**
+```
+set EBAY_APP_ID=your-ebay-app-id
+dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome" "PSA" "9.5"
+```
 
 ---
 
@@ -345,58 +405,11 @@ localStorage.removeItem('isAdmin')
 
 ---
 
-### Prompt 8.1 — Card Listing Agent
-- **Tool:** GitHub Copilot Chat + Claude (fixes)
-- **Date:** April 2026
-- **Output Rating:** ⚠️ Needed Tweaking
-- **Notes:**
-  - Created `src/CardListingAgent/` with correct Anthropic API headers, env var key handling, response validation ✅
-  - **Fix 1 — `CardListing` model missing:** Copilot referenced a return type that didn't exist. Claude added it to Shared ✅
-  - **Fix 2 — Outdated model:** `claude-3-sonnet-20240229` → `claude-sonnet-4-6` as a named constant ✅
-  - **Fix 3 — Broken DI wiring:** Typed HttpClient DI pattern doesn't resolve via `GetRequiredService<HttpClient>()`. Simplified to `new HttpClient()` ✅
-  - **Duplicate class resolution:** Copilot later added `CardListing` to `SportsCardDtos.cs` causing a build failure. Copilot correctly emptied the stub file — `CardListing` now lives in `SportsCardDtos.cs` ✅
-
-**To run:**
-```
-set ANTHROPIC_API_KEY=your-key-here
-dotnet run --project src/CardListingAgent "2025 Bowman Draft Dean Curley BDC-129 Cleveland Guardians Raw Near Mint Bowman First"
-```
-
----
-
-### Prompt 8.3 — Price Research Agent
-- **Tool:** GitHub Copilot Chat + Copilot (fixes)
-- **Date:** April 2026
-- **Output Rating:** ⚠️ Needed Tweaking
-- **Notes:**
-  - `IPricingSource` interface in `Interfaces/`, `EbayPricingSource` in `Sources/`, orchestrator in `PriceResearchAgent.cs` ✅
-  - `PricingModels.cs` added to Shared — `CardPricingRequest`, `PricingResult`, `RecentSale`, `PriceResearchResponse` ✅
-  - Confidence: 10+ sales = High, 5+ = Medium, 1+ = Low. Listing price = average × 1.05/1.10 clamped ✅
-  - **Fix 1 — Wrong eBay API:** Browse API (active listings) → Finding API with `findCompletedItems` + `SoldItemsOnly=true` ✅
-  - **Fix 2 — Keyword filter too broad:** `"auto"` and `"jersey"` blocked autograph/relic cards — replaced with `"lot of"`, `"complete set"`, `"break"`, `"case"` ✅
-- **Next steps:** Card Ladder API — contact [email protected] re: Pro subscription API access
-
-**To run:**
-```
-set EBAY_APP_ID=your-ebay-app-id
-dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome" "PSA" "9.5"
-```
-
----
-
 ## CI/CD Pipeline
 
 ### Prompt CI.1 — Azure Pipelines YAML Pipeline
-- **Tool:** GitHub Copilot Chat
-- **Date:** April 2026
-- **Output Rating:** ✅ Great
-- **Notes:**
-  - `trigger: main`, `ubuntu-latest`, `.NET 10.x` SDK ✅
-  - `restore` → `build --no-restore` → `test --no-build` — no redundant work ✅
-  - Code coverage via `XPlat Code Coverage` added unprompted ✅
-  - Deploy stage: `dependsOn: Build`, branch condition, `environment: production`, `runOnce` strategy ✅
-  - `$(AzureServiceConnection)` — variable reference, never hardcoded ✅
-  - No credentials anywhere in the file ✅
+- **Output Rating:** ✅ Great (initial) — significant fixes during Phase 9
+- **Final state:** Build → restore → build → test → publish → Deploy → restore → EF migrate → zip deploy ✅
 
 ---
 
@@ -418,32 +431,40 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 | 12 | Exposed credentials must be rotated immediately — bots scan public repos continuously | Phase 2 |
 | 13 | Use dotnet user-secrets locally, Azure App Service Configuration for production | Phase 2 |
 | 14 | Add credential file patterns to .gitignore before creating those files | Phase 2 |
-| 15 | Explicit security instructions in Azure/CI prompts prevent credential exposure — lesson held from Phase 2 through CI.1 | Phase 2 / CI |
+| 15 | Explicit security instructions in Azure/CI prompts prevent credential exposure | Phase 2 / CI |
 | 16 | Documentation files can also contain bad security guidance — review all generated docs | Phase 3 |
 | 17 | Mock at the interface level (ISportsCardService) not the DB context — cleaner unit tests | Phase 3 |
 | 18 | Copilot adds bonus output beyond what was requested — infers missing scenarios from existing code | Phase 3 |
-| 19 | When building a standalone agent that needs shared DTOs, Copilot correctly moves them to Shared — keep these unprompted architectural improvements | Phase 8 |
-| 20 | Adding a new field to the entity doesn't automatically cascade to controller action mappings — always verify CreateCard/UpdateCard manually | Phase 8 |
+| 19 | When building a standalone agent that needs shared DTOs, Copilot correctly moves them to Shared | Phase 8 |
+| 20 | Adding a new field to the entity doesn't automatically cascade to controller action mappings | Phase 8 |
 | 21 | **Always verify by SHA, not by Copilot's confirmation** — if SHA hasn't changed, nothing happened | Phase 8 |
 | 22 | A single `MapToResponse()` helper in the controller ensures all fields returned consistently | Phase 8 |
-| 23 | Domain knowledge drives better data models — hobby expertise (parallels, print runs, Bowman Firsts) produced richer schema than any generic template | Phase 8 |
-| 24 | Voice dictation workflow (Claude Desktop mic → Claude parses → Excel row) eliminates manual data entry — design defaults around what's most commonly true | Phase 8 |
-| 25 | Always verify the output type referenced by a new agent actually exists in the solution — Copilot generated a `CardListing` return type that wasn't defined anywhere | Phase 8 |
+| 23 | Domain knowledge drives better data models — hobby expertise produced richer schema than any generic template | Phase 8 |
+| 24 | Voice dictation workflow eliminates manual data entry — design defaults around what's most commonly true | Phase 8 |
+| 25 | Always verify the output type referenced by a new agent actually exists in the solution | Phase 8 |
 | 26 | AI model strings go stale — use a named constant so updates require only one change | Phase 8 |
-| 27 | Verify which API endpoint an agent is using — eBay Browse API (active listings) vs Finding API (sold prices) is a critical distinction for pricing data | Phase 8 |
-| 28 | Review keyword exclusion filters with domain knowledge — "auto" and "jersey" are legitimate card terms, not exclusion candidates | Phase 8 |
-| 29 | CI/CD YAML generated correctly first attempt when security instructions were explicit — `--no-restore` and `--no-build` flags used correctly, code coverage added unprompted | CI |
-| 30 | TypeScript frontend: a filter defined in a type interface is not automatically wired to the API call — verify every filter param is actually appended to the URL | Phase 4 |
-| 31 | Add `*.tsbuildinfo` to `.gitignore` for any TypeScript/Vite project — these build cache files are generated locally and should never be committed | Phase 4 |
-| 32 | Mirror server-side validation on the client — `ImageUpload.tsx` and the API controller enforce the same file type and size limits, preventing wasted round trips | Phase 6 |
-| 33 | Delete the old blob before uploading a replacement — without this, every image update leaves an orphaned file in Azure Blob Storage that accrues storage cost | Phase 6 |
-| 34 | Hide the native file input and trigger it from a custom button — gives full control over the UI state (spinner, label changes) without the inconsistent browser default | Phase 6 |
-| 35 | **React Router v6: layout wrapper routes must be pathless** — giving an `<Outlet>`-based layout its own `path` breaks all child routes; the path belongs on the guard/parent route only | Phase 7 |
-| 36 | Copilot correctly creates `pages/admin/` subfolder unprompted when the prompt specifies an admin section — folder structure mirrors the architectural intent | Phase 7 |
-| 37 | Vite dev server runs on port 5173, not 3000 — CORS policies written for CRA/Express will silently block all API calls from a Vite frontend | Local Dev |
-| 38 | **User secrets override appsettings.Development.json** — .NET config priority order means a connection string set in user secrets during Azure setup will win over a local SQLite string, causing the wrong provider to be used | Local Dev |
-| 39 | EF Core migrations generated against SQL Server cannot be applied to SQLite — use `EnsureCreatedAsync()` for SQLite local dev and `MigrateAsync()` for SQL Server production; split the init path by provider | Local Dev |
-| 40 | A gitignored `appsettings.Development.json` with a SQLite connection string is the right pattern for zero-config local dev — keeps Azure credentials out of code without requiring any manual setup steps | Local Dev |
+| 27 | Verify which API endpoint an agent is using — eBay Browse API vs Finding API is a critical distinction | Phase 8 |
+| 28 | Review keyword exclusion filters with domain knowledge — "auto" and "jersey" are legitimate card terms | Phase 8 |
+| 29 | CI/CD YAML generated correctly first attempt when security instructions were explicit | CI |
+| 30 | TypeScript frontend: a filter defined in a type interface is not automatically wired to the API call | Phase 4 |
+| 31 | Add `*.tsbuildinfo` to `.gitignore` for any TypeScript/Vite project | Phase 4 |
+| 32 | Mirror server-side validation on the client — prevents wasted round trips | Phase 6 |
+| 33 | Delete the old blob before uploading a replacement — prevents orphaned Azure Blob Storage files | Phase 6 |
+| 34 | Hide the native file input and trigger it from a custom button — full control over UI state | Phase 6 |
+| 35 | **React Router v6: layout wrapper routes must be pathless** | Phase 7 |
+| 36 | Copilot correctly creates `pages/admin/` subfolder unprompted when prompt specifies an admin section | Phase 7 |
+| 37 | Vite dev server runs on port 5173, not 3000 — CORS policies written for CRA will silently block all API calls | Local Dev |
+| 38 | **User secrets override appsettings.Development.json** — can silently select the wrong DB provider | Local Dev |
+| 39 | EF Core migrations generated against SQL Server cannot be applied to SQLite — split init by provider | Local Dev |
+| 40 | gitignored `appsettings.Development.json` with SQLite connection string = zero-config local dev pattern | Local Dev |
+| 41 | EF migrations generated locally against SQLite contain SQLite-specific SQL (`TEXT`, `datetime('now')`) — must manually rewrite with SQL Server types (`nvarchar`, `GETUTCDATE()`) before deploying | Phase 9 |
+| 42 | Azure App Service on Linux expects traffic on port **8080** — set `ASPNETCORE_URLS=http://+:8080` as an app setting | Phase 9 |
+| 43 | **Disable `UseHttpsRedirection()` in production on Azure App Service** — SSL is terminated at the front door; the app runs on HTTP inside the container and the redirect causes 500s | Phase 9 |
+| 44 | `dotnet publish` in a pipeline deploy stage requires its own `dotnet restore` — `checkout: self` gives source files but not `project.assets.json` | Phase 9 |
+| 45 | EF migration step needs `ASPNETCORE_ENVIRONMENT=Production` AND `ConnectionStrings__DefaultConnection` injected as env vars — otherwise the design-time host defaults to Development and picks SQLite as the provider | Phase 9 |
+| 46 | Azure Linux App Service portal rejects `__` and `:` in app setting names — use flat names like `BLOB_STORAGE_CONNECTION_STRING` for nested config keys, then read both patterns in code with `??` fallback | Phase 9 |
+| 47 | App Service SQL Server firewall: enable "Allow Azure services and resources to access this server" so pipeline agents (which run on Azure infrastructure) can connect | Phase 9 |
+| 48 | Pipeline zip deploy reports success even when the app isn't running — verify via SSH `ls /home/site/wwwroot/` and check Log stream for startup DLL detection | Phase 9 |
 
 ---
 
@@ -461,11 +482,9 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Documenting the Excel column schema before prompting the import agent = precise output
 - Always have Copilot push to GitHub before asking Claude to review — SHA is the ground truth
 - Pushing all related file changes in a single commit = atomic, reviewable changesets
-- Designing a pricing agent with an `IPricingSource` interface = swap data sources without rewriting logic
-- Reviewing fixes before updating the prompt log = log reflects verified state, not claimed state
-- Specifying both client-side and server-side validation requirements in file upload prompts = consistent behavior across the stack
-- Calling out known React Router v6 pitfalls in the prompt (pathless layout routes, Outlet vs children) = Copilot gets routing right on the first try more often
-- Provider auto-detection via connection string pattern = single codebase runs on SQLite locally and SQL Server in production with zero config changes
+- Provider auto-detection via connection string pattern = single codebase runs on SQLite locally and SQL Server in production
+- Calling out known React Router v6 pitfalls in the prompt = Copilot gets routing right more often
+- Specifying both client-side and server-side validation requirements in file upload prompts = consistent behavior
 
 ---
 
@@ -479,10 +498,11 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Adding a field in one prompt doesn't guarantee it cascades to all controller actions — always verify
 - Asking Copilot to verify small changes it hasn't made yet — it will hallucinate completion
 - Agent prompts that don't specify where the return type model should live — Copilot may reference a class it never creates
-- Accepting an agent's API integration without verifying it targets the right endpoint — check active vs sold, v1 vs v2
+- Accepting an agent's API integration without verifying it targets the right endpoint
 - Frontend filter types don't automatically wire to API calls — always verify every filter param is appended
-- React Router v6 layout routes: not explicitly calling out the pathless pattern leads to Copilot adding `path` to layout wrappers, breaking nested routing
-- Assuming CORS is wired for the actual dev server port — always verify the origin list matches the framework's default port
+- React Router v6 layout routes: not explicitly calling out the pathless pattern leads to Copilot adding `path` to layout wrappers
+- Assuming CORS is wired for the actual dev server port — always verify the origin list
+- EF migrations generated locally against SQLite will fail on SQL Server — always check the provider context when generating migrations
 
 ---
 
