@@ -15,8 +15,11 @@ function App() {
         <Route path="/cards/:id" element={<CardDetailPage />} />
 
         {/* Admin Routes */}
+        {/* AdminRoute guards access, AdminLayout provides the nav shell.
+            Layout routes must be pathless in React Router v6 so they don't
+            consume a URL segment — the path matching is handled by the parent. */}
         <Route path="/admin" element={<AdminRoute />}>
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route element={<AdminLayout />}>
             <Route index element={<AdminDashboardPage />} />
             <Route path="cards" element={<ManageCardsPage />} />
             <Route path="cards/new" element={<CardFormPage />} />
