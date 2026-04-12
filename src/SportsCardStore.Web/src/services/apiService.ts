@@ -141,7 +141,8 @@ export class ApiService {
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to upload image: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(errorText || `Upload failed: ${response.statusText}`);
     }
 
     return await response.json();
