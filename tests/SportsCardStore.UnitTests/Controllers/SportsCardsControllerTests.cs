@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SportsCardStore.API.Controllers;
 using SportsCardStore.API.Models;
+using SportsCardStore.Shared.Models;
 using SportsCardStore.Core.Entities;
 using SportsCardStore.Core.Enums;
 using SportsCardStore.Core.Interfaces;
@@ -20,14 +21,19 @@ namespace SportsCardStore.UnitTests.Controllers;
 public class SportsCardsControllerTests
 {
     private readonly Mock<ISportsCardService> _mockSportsCardService;
+    private readonly Mock<IBlobStorageService> _mockBlobStorageService;
     private readonly Mock<ILogger<SportsCardsController>> _mockLogger;
     private readonly SportsCardsController _controller;
 
     public SportsCardsControllerTests()
     {
         _mockSportsCardService = new Mock<ISportsCardService>();
+        _mockBlobStorageService = new Mock<IBlobStorageService>();
         _mockLogger = new Mock<ILogger<SportsCardsController>>();
-        _controller = new SportsCardsController(_mockSportsCardService.Object, _mockLogger.Object);
+        _controller = new SportsCardsController(
+            _mockSportsCardService.Object,
+            _mockBlobStorageService.Object,
+            _mockLogger.Object);
     }
 
     /// <summary>
@@ -72,9 +78,11 @@ public class SportsCardsControllerTests
         };
 
         _mockSportsCardService
-            .Setup(s => s.GetAllAsync(It.IsAny<Category?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+            .Setup(s => s.GetAllAsync(
+                It.IsAny<Category?>(), It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(),
-                It.IsAny<bool?>(), It.IsAny<int>(), It.IsAny<int>()))
+                It.IsAny<bool?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<int?>(),
+                It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(pagedResult);
 
         // Act
@@ -117,9 +125,11 @@ public class SportsCardsControllerTests
         };
 
         _mockSportsCardService
-            .Setup(s => s.GetAllAsync(It.IsAny<Category?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+            .Setup(s => s.GetAllAsync(
+                It.IsAny<Category?>(), It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(),
-                It.IsAny<bool?>(), It.IsAny<int>(), It.IsAny<int>()))
+                It.IsAny<bool?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<int?>(),
+                It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(emptyPagedResult);
 
         // Act
@@ -283,10 +293,8 @@ public class SportsCardsControllerTests
             PlayerName = "", // Invalid: Required field is empty
             Year = 2023,
             Brand = "Topps"
-            // Missing other required fields
         };
 
-        // Simulate invalid model state
         _controller.ModelState.AddModelError("PlayerName", "The PlayerName field is required.");
 
         // Act
@@ -328,8 +336,8 @@ public class SportsCardsControllerTests
         {
             Id = cardId,
             PlayerName = "Shohei Ohtani",
-            Year = 2022, // Different from update
-            Brand = "Panini", // Different from update
+            Year = 2022,
+            Brand = "Panini",
             CardNumber = "17",
             Sport = Category.Baseball,
             Team = "Angels",
@@ -370,8 +378,8 @@ public class SportsCardsControllerTests
         var response = okResult.Value as SportsCardResponse;
         response.Should().NotBeNull();
         response!.Id.Should().Be(cardId);
-        response.Year.Should().Be(2023); // Updated value
-        response.Brand.Should().Be("Topps"); // Updated value
+        response.Year.Should().Be(2023);
+        response.Brand.Should().Be("Topps");
         response.Price.Should().Be(750.00m);
     }
 
@@ -443,7 +451,6 @@ public class SportsCardsControllerTests
         var noContentResult = result as NoContentResult;
         noContentResult!.StatusCode.Should().Be(StatusCodes.Status204NoContent);
         
-        // Verify service methods were called
         _mockSportsCardService.Verify(s => s.GetByIdAsync(cardId), Times.Once);
         _mockSportsCardService.Verify(s => s.DeleteAsync(cardId), Times.Once);
     }
@@ -468,7 +475,6 @@ public class SportsCardsControllerTests
         notFoundResult!.StatusCode.Should().Be(StatusCodes.Status404NotFound);
         notFoundResult.Value.Should().Be($"Sports card with ID {cardId} not found");
         
-        // Verify delete was not called since card doesn't exist
         _mockSportsCardService.Verify(s => s.GetByIdAsync(cardId), Times.Once);
         _mockSportsCardService.Verify(s => s.DeleteAsync(It.IsAny<int>()), Times.Never);
     }
@@ -482,9 +488,11 @@ public class SportsCardsControllerTests
     {
         // Arrange
         _mockSportsCardService
-            .Setup(s => s.GetAllAsync(It.IsAny<Category?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+            .Setup(s => s.GetAllAsync(
+                It.IsAny<Category?>(), It.IsAny<string?>(), It.IsAny<string?>(),
                 It.IsAny<string?>(), It.IsAny<int?>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(),
-                It.IsAny<bool?>(), It.IsAny<int>(), It.IsAny<int>()))
+                It.IsAny<bool?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<int?>(),
+                It.IsAny<int>(), It.IsAny<int>()))
             .ThrowsAsync(new Exception("Database connection failed"));
 
         // Act
@@ -508,9 +516,9 @@ public class SportsCardsControllerTests
         var cardId = 1;
         var updateRequest = new UpdateSportsCardRequest
         {
-            PlayerName = "", // Invalid: Required field is empty
-            Year = 1500, // Invalid: Below minimum range
-            Brand = new string('x', 100), // Invalid: Exceeds max length
+            PlayerName = "",
+            Year = 1500,
+            Brand = new string('x', 100),
             CardNumber = "1",
             Sport = Category.Baseball,
             Team = "Team",
@@ -520,7 +528,6 @@ public class SportsCardsControllerTests
             IsAvailable = true
         };
 
-        // Simulate invalid model state
         _controller.ModelState.AddModelError("PlayerName", "The PlayerName field is required.");
         _controller.ModelState.AddModelError("Year", "Year must be between 1800 and 2100.");
 
