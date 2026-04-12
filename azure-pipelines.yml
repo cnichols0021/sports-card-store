@@ -101,7 +101,7 @@ stages:
                   inputs:
                     command: "custom"
                     custom: "ef"
-                    arguments: "database update --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API --connection \"$(AzureConnectionString)\" --verbose"
+                    arguments: 'database update --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API --connection "$(AzureConnectionString)" --verbose'
 
                 - task: AzureWebApp@1
                   displayName: "Deploy to Azure App Service"
