@@ -22,17 +22,21 @@ namespace SportsCardStore.Infrastructure.Services
 
             try
             {
-                var connectionString = configuration["AzureBlobStorage:ConnectionString"];
-                _containerName = configuration["AzureBlobStorage:ContainerName"];
+                // Try nested key first (local dev via user secrets / appsettings)
+                // Fall back to flat env var names (Azure Linux App Service portal)
+                var connectionString = configuration["AzureBlobStorage:ConnectionString"]
+                                    ?? configuration["BLOB_STORAGE_CONNECTION_STRING"];
+
+                _containerName = configuration["AzureBlobStorage:ContainerName"]
+                              ?? configuration["BLOB_STORAGE_CONTAINER_NAME"]
+                              ?? "card-images";
 
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    throw new InvalidOperationException("AzureBlobStorage:ConnectionString configuration is missing or empty");
-                }
-
-                if (string.IsNullOrEmpty(_containerName))
-                {
-                    throw new InvalidOperationException("AzureBlobStorage:ContainerName configuration is missing or empty");
+                    throw new InvalidOperationException(
+                        "Blob storage connection string is missing. " +
+                        "Set AzureBlobStorage:ConnectionString (local) or " +
+                        "BLOB_STORAGE_CONNECTION_STRING (Azure App Service).");
                 }
 
                 _blobServiceClient = new BlobServiceClient(connectionString);
@@ -57,30 +61,23 @@ namespace SportsCardStore.Infrastructure.Services
                 if (string.IsNullOrWhiteSpace(fileName))
                     throw new ArgumentException("File name cannot be null or empty", nameof(fileName));
 
-                // Ensure the stream is at the beginning
                 if (imageStream.CanSeek)
                     imageStream.Position = 0;
 
-                // Generate a unique filename to avoid conflicts
                 var uniqueFileName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}_{fileName}";
-                
                 var blobClient = _containerClient.GetBlobClient(uniqueFileName);
 
-                // Set content type based on file extension
                 var contentType = GetContentType(fileName);
                 var blobHttpHeaders = new BlobHttpHeaders { ContentType = contentType };
 
-                // Upload the blob
                 await blobClient.UploadAsync(
-                    imageStream, 
-                    new BlobUploadOptions 
-                    { 
+                    imageStream,
+                    new BlobUploadOptions
+                    {
                         HttpHeaders = blobHttpHeaders
                     });
 
                 _logger.LogInformation("Successfully uploaded image: {FileName} as {UniqueFileName}", fileName, uniqueFileName);
-
-                // Return the public URL
                 return blobClient.Uri.ToString();
             }
             catch (Exception ex)
@@ -129,9 +126,8 @@ namespace SportsCardStore.Infrastructure.Services
                     throw new ArgumentException("File name cannot be null or empty", nameof(fileName));
 
                 var blobClient = _containerClient.GetBlobClient(fileName);
-
-                // Check if the blob exists
                 var exists = await blobClient.ExistsAsync();
+
                 if (!exists.Value)
                 {
                     _logger.LogWarning("Image not found: {FileName}", fileName);
@@ -151,7 +147,7 @@ namespace SportsCardStore.Infrastructure.Services
         private static string GetContentType(string fileName)
         {
             var extension = Path.GetExtension(fileName)?.ToLowerInvariant();
-            
+
             return extension switch
             {
                 ".jpg" or ".jpeg" => "image/jpeg",
