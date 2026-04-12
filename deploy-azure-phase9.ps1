@@ -17,7 +17,7 @@ $sqlServer = "sportscard-sql-server.database.windows.net"
 $sqlDatabase = "SportscardDb"
 $storageAccount = "sportscardstore"
 $location = "eastus2"
-$sqlPassword = "YourStrongPassword123!"  # <-- UPDATE THIS
+$sqlPassword = "SportsC@rds@pr1l2026"  # <-- UPDATE THIS
 
 # ===============================================
 # Task 1: Configure Azure App Service Application Settings
