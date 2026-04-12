@@ -107,12 +107,19 @@ stages:
                     custom: "tool"
                     arguments: "install --global dotnet-ef"
 
+                # Set ASPNETCORE_ENVIRONMENT=Production and inject the SQL Server
+                # connection string so Program.cs registers UseSqlServer (not SQLite)
+                # when EF tools spin up the app to discover the DbContext.
+                # Without this, the build agent defaults to Development and picks SQLite.
                 - task: DotNetCoreCLI@2
                   displayName: "Run EF Core Database Migrations"
                   inputs:
                     command: "custom"
                     custom: "ef"
                     arguments: 'database update --project src/SportsCardStore.Infrastructure --startup-project src/SportsCardStore.API --connection "$(AzureConnectionString)" --verbose'
+                  env:
+                    ASPNETCORE_ENVIRONMENT: Production
+                    ConnectionStrings__DefaultConnection: $(AzureConnectionString)
 
                 - task: AzureWebApp@1
                   displayName: "Deploy to Azure App Service"
