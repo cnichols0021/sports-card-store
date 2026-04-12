@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -16,29 +16,29 @@ namespace SportsCardStore.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PlayerName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Year = table.Column<int>(type: "INTEGER", nullable: false),
-                    Brand = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    SetName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    CardNumber = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    PlayerName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Year = table.Column<int>(type: "int", nullable: false),
+                    Brand = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    SetName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CardNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Sport = table.Column<int>(type: "int", nullable: false),
-                    Team = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    IsRookie = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
-                    IsAutograph = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
-                    IsRelic = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
-                    IsBowmanFirst = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    Team = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    IsRookie = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsAutograph = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsRelic = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsBowmanFirst = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     ParallelName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     PrintRun = table.Column<int>(type: "int", nullable: true),
-                    Grade = table.Column<float>(type: "REAL", nullable: true),
+                    Grade = table.Column<decimal>(type: "decimal(3,1)", nullable: true),
                     GradingCompany = table.Column<int>(type: "int", nullable: false),
-                    Condition = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    Price = table.Column<float>(type: "REAL", nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    ImageUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Condition = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Price = table.Column<decimal>(type: "decimal(8,2)", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    CreatedDate = table.Column<string>(type: "TEXT", nullable: false, defaultValueSql: "datetime('now')"),
-                    UpdatedDate = table.Column<string>(type: "TEXT", nullable: false, defaultValueSql: "datetime('now')")
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
                 constraints: table =>
                 {
