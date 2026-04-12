@@ -178,13 +178,40 @@ npm run dev
 
 ## Phase 5 — Stripe Payments
 
-*(Prompts to be added as this phase begins)*
+*(Skipped for now — self-contained phase, does not block Phase 6 or 7)*
 
 ---
 
 ## Phase 6 — Image Upload Pipeline
 
-*(Prompts to be added as this phase begins)*
+### Prompt 6.1 — Image Upload API Endpoints
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - `POST /api/sportscards/{id}/image` — uploads image to Azure Blob Storage, updates `ImageUrl` on card ✅
+  - `DELETE /api/sportscards/{id}/image` — deletes blob and clears `ImageUrl` on card ✅
+  - `IBlobStorageService` (from Phase 2) injected alongside `ISportsCardService` in controller ✅
+  - File size validated server-side (10MB hard limit) ✅
+  - Extension whitelist: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.webp`, `.tiff` ✅
+  - Old image auto-deleted from Blob Storage before uploading replacement — no orphaned blobs ✅
+  - `ExtractFileNameFromUrl()` private helper safely parses blob URL back to filename for deletion ✅
+  - `UpdateImageUrlAsync(id, url)` added to `ISportsCardService` and `SportsCardService` ✅
+  - ProducesResponseType annotations on both new endpoints ✅
+
+### Prompt 6.2 — ImageUpload Frontend Component
+- **Tool:** GitHub Copilot Chat
+- **Date:** April 2026
+- **Output Rating:** ✅ Great
+- **Notes:**
+  - `ImageUpload.tsx` component with `cardId`, `hasImage`, `onUploadSuccess`, `onError` props ✅
+  - Hidden `<input type="file">` triggered by visible button — no browser default file input UI ✅
+  - Client-side validation mirrors server: JPG/PNG only, 10MB max ✅
+  - Button label is context-aware: "Upload Image" (no image) vs "Replace Image" (existing) ✅
+  - Inline upload spinner with `animate-spin` during upload ✅
+  - File input reset after every upload attempt so same file can be re-selected ✅
+  - `apiService.uploadCardImage(cardId, file)` method added as `FormData` multipart POST ✅
+  - Component integrated into `CardDetailPage` ✅
 
 ---
 
@@ -350,6 +377,9 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 | 29 | CI/CD YAML generated correctly first attempt when security instructions were explicit — `--no-restore` and `--no-build` flags used correctly, code coverage added unprompted | CI |
 | 30 | TypeScript frontend: a filter defined in a type interface is not automatically wired to the API call — verify every filter param is actually appended to the URL | Phase 4 |
 | 31 | Add `*.tsbuildinfo` to `.gitignore` for any TypeScript/Vite project — these build cache files are generated locally and should never be committed | Phase 4 |
+| 32 | Mirror server-side validation on the client — `ImageUpload.tsx` and the API controller enforce the same file type and size limits, preventing wasted round trips | Phase 6 |
+| 33 | Delete the old blob before uploading a replacement — without this, every image update leaves an orphaned file in Azure Blob Storage that accrues storage cost | Phase 6 |
+| 34 | Hide the native file input and trigger it from a custom button — gives full control over the UI state (spinner, label changes) without the inconsistent browser default | Phase 6 |
 
 ---
 
@@ -369,6 +399,7 @@ dotnet run --project src/PriceResearchAgent -- "Mike Trout" 2023 "Topps" "Chrome
 - Pushing all related file changes in a single commit = atomic, reviewable changesets
 - Designing a pricing agent with an `IPricingSource` interface = swap data sources without rewriting logic
 - Reviewing fixes before updating the prompt log = log reflects verified state, not claimed state
+- Specifying both client-side and server-side validation requirements in file upload prompts = consistent behavior across the stack
 
 ---
 
