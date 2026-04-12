@@ -75,6 +75,10 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Checkout source is required so dotnet-ef can find the project files
+                # for running database migrations against Azure SQL
+                - checkout: self
+
                 - task: DownloadBuildArtifacts@0
                   displayName: "Download build artifacts"
                   inputs:
