@@ -46,20 +46,20 @@ builder.Services.AddCors(options =>
     {
         var origins = new List<string>
         {
-            "http://localhost:3000",  // CRA default
-            "http://localhost:3001",  // CRA / Vite fallback
-            "http://localhost:3002",  // CRA / Vite fallback
-            "http://localhost:5173",  // Vite default
-            "http://localhost:5174"   // Vite fallback
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
+            "http://localhost:5173",
+            "http://localhost:5174"
         };
-        
+
         // Add production frontend URL if configured
         var frontendUrl = builder.Configuration["FrontendUrl"];
         if (!string.IsNullOrEmpty(frontendUrl))
         {
             origins.Add(frontendUrl);
         }
-        
+
         policy.WithOrigins(origins.ToArray())
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -80,17 +80,13 @@ try
 
     if (isSqlite)
     {
-        // SQLite local dev: EnsureCreated builds the schema directly from the
-        // current model — no migrations required, no provider-compatibility issues.
         await context.Database.EnsureCreatedAsync();
     }
     else
     {
-        // SQL Server (Azure): apply any pending EF migrations.
         await context.Database.MigrateAsync();
     }
 
-    // Only seed data in development
     if (app.Environment.IsDevelopment())
     {
         await SportsCardSeeder.SeedAsync(context);
@@ -102,14 +98,20 @@ catch (Exception ex)
     logger.LogError(ex, "An error occurred while initializing the database.");
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS in development — on Azure Linux App Service, SSL is
+// terminated at the front door and traffic arrives at the container over HTTP.
+// UseHttpsRedirection() in production causes 500s because there is no HTTPS
+// listener inside the container.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowFrontend");
 
